@@ -23,4 +23,13 @@ PIHM <-function(param=TRUE){
     print ("##        #### ##     ## ##     ##");
     print ("    The Penn State Integrated Hydrologic Model");
     print ("    Current version is PIHM-MF and PIHM v2.4");
+     
+    if (!require(xts))
+    {
+        cat('\n\n Trying to install xts package\n');
+        install.packages("xts",dep=TRUE)
+        if(!require(xts)) stop("Package not found")
+    }
+
+    
 }
