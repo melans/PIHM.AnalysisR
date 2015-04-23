@@ -1,5 +1,5 @@
 #' PIHM Analysis project.
-#' Developed by Lele Shu( lele.shu@gmail.com  lzs157@psu.edu ) 
+#' Developed by Lele Shu( lele.shu at gmail.com  lzs157 at psu.edu ) 
 #' Created by  Thu Apr 16 10:53:00 EDT 2015
 #'  <- ============================================
 #'  Current version is for PIHM 2.0 and above;
@@ -10,6 +10,7 @@
 #' @param  prpjectname.
 #' @keywords read input. mesh file.
 #' @export  List of river data. river
+#' @examples
 #' readriv()
 
 

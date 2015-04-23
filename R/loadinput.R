@@ -7,13 +7,24 @@
 #' 
 #'  <- ============================================
 #' @param  Path of output folder.
-#' @keywords read output. Could be used for reading mesh and river format.
+#' @keywords read output
 #' @export  output data.
 #' @examples
-#' readout()
+#' PIHM()
 
 
-readoutlist <-function(fn){
+goQ <-function(inpath, outpath){
+    nargin <- nargs();
+    if (nargin <1){
+        cat("\nUsage:\n\t data = readout(path_of_output,extension_of_data)\n");
+        cat("\n\n");
+        return(0);
+    }
+    
+
+}
+
+readout <-function(fn){
     nargin <- nargs()
     if (nargin <1 || nargin >1){
         cat("\nUsage:\n\t data = readout(fn)\n");
@@ -21,18 +32,13 @@ readoutlist <-function(fn){
         cat("\n\n");
         return(0);
     }
-    if (!file.exists(fn)){
-        cat("Error: file does not exist\n\t",c(fn), "\n");
-        return(0);
-    }
-    d <- read.table(fn);
-    cat("\t Reading file \n\t\t ",as.character(fn) ,"\n");
+    
     t <- as.Date(d[,1]);
     data <- d[,-1];
     mn <- dim(data)
 #    m <- mn[1];
 #    n <- mn[2];
 #    d <- data.frame(t,data,m,n);
-    d <- list("time"=t,"data"=data);
+    d <- data.frame(t,data);
     return(d);
 }

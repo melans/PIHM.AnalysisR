@@ -1,20 +1,25 @@
 #' PIHM Analysis project.
-#' Developed by Lele Shu( lele.shu@gmail.com  lzs157@psu.edu ) 
+#' Developed by Lele Shu( lele.shu at gmail.com  lzs157 at psu.edu ) 
 #' Created by Wed Apr 15 20:25:45 EDT 2015
-#'  <- ============================================
 #'  Current version is for PIHM-MF or PIHM v2.4;
 #' 
 #' 
-#'  <- ============================================
-#' @param  inpath and outpath
+#' @param  inpath
+#' @param  outpath 
+#' @param  resultpath  For saving image file.
+#' @param  ifplot  If plot and save image file. 
+#' @param  projectname 
+#' @param  outlets Outlets id(s).
 #' @keywords discharge, hydrograph
-#' @export  discharge and a plot.
-#' goQ()
+#' @return Q, the discharge of outlets, type=TS.
+#' @examples  
+#' Q <- goQ(inpath="./", outpath="./", resultpath="./AnalysisResults/",ifplot=1, projectname=0,outlets=0)
 
-goQ <-function(inpath="./", outpath="./", resultpath="./AnalysisResults/",ifplot=1, projectname=0,outlets=0){
+
+goQ <-function(inpath="./", outpath="./", resultpath="AnalysisResults/",ifplot=1, projectname=0,outlets=0){
     nargin <- nargs();
     if (nargin <1){
-        cat("\nUsage:\n\t data = readout(path_of_output,extension_of_data)\n");
+        cat("\nUsage:\n\t Q <- goQ(inpath=\"./\", outpath=\"./\", resultpath=\"./AnalysisResults/\",ifplot=1, projectname=0,outlets=0)\n");
         cat("\n\n");
         return(0);
     }
@@ -34,7 +39,7 @@ goQ <-function(inpath="./", outpath="./", resultpath="./AnalysisResults/",ifplot
     Qall <- readout(fn);
 #    Q <- list("time"=Qall$time, "data"=Qall$data[,outlets],"ids"=outlets);
     Q <- Qall[,outlets];
-        print("here");
+        print("Load successfully");
 
     if (ifplot){
         if (!file.exists(resultpath)){  #make the result folder

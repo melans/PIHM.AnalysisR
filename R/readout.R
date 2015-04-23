@@ -1,16 +1,13 @@
 #' PIHM Analysis project.
-#' Developed by Lele Shu( lele.shu@gmail.com  lzs157@psu.edu ) 
+#' Developed by Lele Shu( lele.shu at gmail.com  lzs157 at psu.edu ) 
 #' Created by Wed Apr 15 20:25:45 EDT 2015
-#'  <- ============================================
 #'  Current version is for PIHM-MF or PIHM v2.4;
-#' 
-#' 
-#'  <- ============================================
-#' @param  Path of output folder.
+#' @param  fn Full path of input file. The file has to be in matrix format and first colomn is in "YYYY-MM-DD hh:mm".
 #' @keywords read output. Could be used for reading mesh and river format.
 #' @export  output data.
+#' @return A TimeSeries data. This list require support of xts packages.
 #' @examples
-#' readout()
+#' readout(fn)
 
 
 readout <-function(fn){
