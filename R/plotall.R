@@ -33,9 +33,10 @@ plotall <-function(data, outpath='./',resultpath="AnalysisResults/",projectname,
     
     nm=names(pihm);
     for ( i in 1:length(pihm) ){
+        cat("\tplotting ",nm[i],"\n");
         imgfile=paste(resultpath,as.character(nm[i]),".png",sep='')
         png(imgfile,width=4, height=4, units="in", res=300)
-        matplot(pihm[[i]],type='l')
+        matplot(pihm[[i]],type='l',ylabel=nm[i])
         dev.off()
     }
     return(pihm);
