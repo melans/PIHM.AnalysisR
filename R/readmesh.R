@@ -11,32 +11,32 @@
 #' readmesh(inpath="./",projectname)
 
 
-readmesh <-function(inpath="./",projectname){
-    nargin <- nargs();
-    if (nargin <1){
-        cat("\nUsage:\n\t readmesh <-function(inpath=\"./\",projectname)\n");
-        cat("\n\n");
-        return(0);
+readmesh <-function(){
+    meshfile <- file.path(inpath, paste(projectname,".mesh",sep=''));
+    if (pihmver >=2.4 ){
+        ncell=scan(meshfile,what=integer(),nmax=1,blank.lines.skip = TRUE);
+        mshhead=scan(meshfile,what=character(),nlines=1,blank.lines.skip = TRUE);
+
+        msh <-t( matrix (scan(meshfile,what=integer(),skip=1,nlines=ncell,blank.lines.skip = TRUE), ncol=ncell))
+
+        npt=scan(meshfile,what=integer(),nmax=1,skip=ncell+1,blank.lines.skip = TRUE);
+        pthead=scan(meshfile,what=character(),nlines=1,skip=ncell+1,blank.lines.skip = TRUE);
+        pt <-t( matrix (scan(meshfile,what=double(),skip=ncell+2,nlines=ncell,blank.lines.skip = TRUE), ncol=npt))
+
+        colnames(msh)= c("ID",mshhead[-1]) 
+        colnames(pt)=c("ID",pthead[-1]);
     }
-    
-    if (substring(inpath,nchar(inpath))=="/"){
-    }else{
-        inpath <- paste(inpath,"/",sep='');    
+    else{
+        num=scan(meshfile,what=integer(),nmax=2,blank.lines.skip = TRUE);
+        ncell=num[1];
+        npt=num[2];
+        msh <-t( matrix (scan(meshfile,what=integer(),skip=1,nlines=ncell,blank.lines.skip = TRUE), ncol=ncell))
+        pt <-t( matrix (scan(meshfile,what=double(),skip=ncell+2,nlines=ncell,blank.lines.skip = TRUE), ncol=npt))
+
+        colnames(msh) <- c("ID","NODE1","NODE2","NODE3","NABR1","NABR2","NABR3")
+        colnames(pt) <- c("ID", "X","Y","ZMIN","ZMAX");
+
     }
-    if (nargin <2){ # default: projenctname can be access from projectName.txt;
-        projectname=scan(paste(inpatth,"projectName.txt",sep=''));
-    }
-
-meshfile <- paste(inpath, projectname,".mesh",sep='');
-ncell=scan(meshfile,what=integer(),nmax=1,blank.lines.skip = TRUE);
-mshhead=scan(meshfile,what=character(),nlines=1,blank.lines.skip = TRUE);
-
-msh <-t( matrix (scan(meshfile,what=integer(),skip=1,nlines=ncell,blank.lines.skip = TRUE), ncol=ncell))
-
-npt=scan(meshfile,what=integer(),nmax=1,skip=ncell+1,blank.lines.skip = TRUE);
-pthead=scan(meshfile,what=character(),nlines=1,skip=ncell+1,blank.lines.skip = TRUE);
-pt <-t( matrix (scan(meshfile,what=double(),skip=ncell+2,nlines=ncell,blank.lines.skip = TRUE), ncol=npt))
-
-mesh <-list("size"=c(ncell,npt),"mesh"=msh, "headerMesh"=mshhead,"points"=pt, "headerPt"=pthead);
-return(mesh);
+    mesh <-list("size"=c(ncell,npt),"mesh"=msh, "points"=pt );
+    return(mesh);
 }

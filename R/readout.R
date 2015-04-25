@@ -10,19 +10,33 @@
 #' readout(fn)
 
 
-readout <-function(fn){
+readout <-function(fn,binary=FALSE){
+
+
+    
     nargin <- nargs()
-    if (nargin <1 || nargin >1){
+    if (nargin <1 ){
         cat("\nUsage:\n\t data = readout(fn)\n");
         cat("Where:\ndata = [T,data]\n");
         cat("\n\n");
         return(0);
     }
-    if (!file.exists(fn)){
-        cat("Error: file does not exist\n\t",c(fn), "\n");
-        return(0);
+#==============================
+readpihmmf <- function(fn,binary){
+    if (binary){
+        mesh <- readmesh();
+        maxn=100*365*24*10000;
+        d <- readBin(fn,what=numeric(),n=maxn*mesh$size[1]);
+
+    }else{
+        d <- read.table(fn);
+        t <- as.Date(d[,1]);
+        data <- d[,-1];
+        ts <- xts(data,order.by=t);
     }
-    cat("\t Reading file \n\t\t ",as.character(fn) ,"\n");
+    return(ts);
+}
+readpihm20 <- function(fn){
     d <- read.table(fn);
     t <- as.Date(d[,1]);
     data <- d[,-1];
@@ -30,3 +44,21 @@ readout <-function(fn){
     
     return(ts);
 }
+#==============================
+
+    if (!file.exists(fn)){
+        cat("Error: file does not exist\n\t",c(fn), "\n");
+        return(0);
+    }
+
+    cat("\t Reading file \n\t\t ",as.character(fn) ,"\n");
+    if (pihmversion > 2.3){
+        ts <- readpihmmf(fn,binary);
+    }
+    else{
+        ts <- readpihm20(fn);
+    }
+
+}
+
+
