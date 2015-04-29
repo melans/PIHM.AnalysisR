@@ -31,7 +31,7 @@ readmesh <-function(){
         ncell=num[1];
         npt=num[2];
         msh <-t( matrix (scan(meshfile,what=integer(),skip=1,nlines=ncell,blank.lines.skip = TRUE), ncol=ncell))
-        pt <-t( matrix (scan(meshfile,what=double(),skip=ncell+2,nlines=ncell,blank.lines.skip = TRUE), ncol=npt))
+        pt <-t( matrix (scan(meshfile,what=double(),skip=ncell+1,nlines=ncell,blank.lines.skip = TRUE), ncol=npt))
 
         colnames(msh) <- c("ID","NODE1","NODE2","NODE3","NABR1","NABR2","NABR3")
         colnames(pt) <- c("ID", "X","Y","ZMIN","ZMAX");

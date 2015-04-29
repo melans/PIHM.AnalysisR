@@ -101,9 +101,9 @@ PIHM <-function(indir, outdir,pname,ver){
     
    if ( !exists('inpath') ) {
        if (missing(indir) && !exists('inapth')  ){
-           indir <- readline(prompt="Path of input folder for PIHM:\n");
+           indir <- readline(prompt="Path of input folder for PIHM(ENTER = current word directory):\n");
            while (nchar(indir)<=0 ) {
-               indir <- readline(prompt="Wrong input. Let's try again.\n path of input folder for PIHM:\n");
+               indir <- './' #readline(prompt="Wrong input. Let's try again.\n path of input folder for PIHM:\n");
            }
            while (!file.exists(indir)  ) {
                indir <- readline(prompt="Folder doesn't exist. Try again. \n path of input folder for PIHM:\n");
@@ -162,6 +162,14 @@ PIHM <-function(indir, outdir,pname,ver){
         if(!require(rgl)) 
             stop("Package not found")
     }
+    if (!require(geometry))
+    {
+        cat('\n\n Trying to install geometry package\n');
+        install.packages("geometry",dep=TRUE,repos='http://cran.us.r-project.org')
+        if(!require(rgl)) 
+            stop("Package not found")
+    }
+    
    library(Rcpp)    #for converting time_t to R time&date
     cppFunction('String  t2time( long int intime) {
         time_t rawtime;

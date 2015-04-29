@@ -14,7 +14,7 @@
 #' @examples
 #' loadoutputQ(outpath,projectname)
 
-plotall <-function(data, outpath='./',resultpath="AnalysisResults/",projectname,inpath){
+plotall <-function(data){
    nargin <- nargs();
     if (nargin <1){
         cat("\nUsage:\n\t PIHMout <- loadoutput(outpath=\"./\",projectname)\n");
@@ -22,23 +22,30 @@ plotall <-function(data, outpath='./',resultpath="AnalysisResults/",projectname,
         return(0);
     }
     if (missing(data)){
-        pihm <- loadoutput(outpath,projectname,inpath);
+        pihm <- loadoutput();
     }
     else{
         pihm <- data;
     }
-    if (!file.exists(resultpath)){  #make the result folder
-        dir.create(resultpath)
+    if (!file.exists(Resultpath)){  #make the result folder
+        dir.create(Resultpath)
     }
     
     nm=names(pihm);
     for ( i in 1:length(pihm) ){
-        cat("\tplotting ",nm[i],"\n");
-        imgfile=paste(resultpath,as.character(nm[i]),".png",sep='')
-        png(imgfile,width=4, height=4, units="in", res=300)
-        matplot(pihm[[i]],type='l',ylabel=nm[i])
-        dev.off()
+        if (!is.null(pihm[[i]])){
+            cat(i,"\tplotting ",nm[i],"\n");
+            imgfile=file.path(Resultpath,paste(as.character(nm[i]),".png",sep=''));
+            png(imgfile,width=1600, height=1600)
+            matplot(pihm[[i]],type='l',ylab=nm[i])
+            dev.off()
+        }
     }
-    return(pihm);
+    if (missing(data)){
+            return(pihm);
+    }
+    else{
+    }
+
 }
 

@@ -52,7 +52,7 @@ readpihm20 <- function(fn){
     }
 
     cat("\t Reading file \n\t\t ",as.character(fn) ,"\n");
-    if (pihmversion > 2.3){
+    if (pihmver > 2.3){
         ts <- readpihmmf(fn,binary);
     }
     else{
