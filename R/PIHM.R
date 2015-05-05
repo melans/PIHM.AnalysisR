@@ -162,11 +162,18 @@ PIHM <-function(indir, outdir,pname,ver){
         if(!require(rgl)) 
             stop("Package not found")
     }
-    if (!require(geometry))
+    if (!require(akima))
     {
-        cat('\n\n Trying to install geometry package\n');
-        install.packages("geometry",dep=TRUE,repos='http://cran.us.r-project.org')
-        if(!require(rgl)) 
+        cat('\n\n Trying to install quantmod package\n');
+        install.packages("akima",dep=TRUE,repos='http://cran.us.r-project.org')
+        if(!require(akima)) 
+            stop("Package not found")
+    }
+    if (!require(quantmod))
+    {
+        cat('\n\n Trying to install quantmod package\n');
+        install.packages("quantmod",dep=TRUE,repos='http://cran.us.r-project.org')
+        if(!require(quantmod)) 
             stop("Package not found")
     }
     
@@ -178,6 +185,21 @@ PIHM <-function(indir, outdir,pname,ver){
         timestr = ctime(&rawtime);
         return timestr;
     }')
+    
+#   library(Rcpp)    #for converting time_t to R time&date
+#    cppFunction('String  t2time( long int intime) {
+#        time_t rawtime;
+#        struct tm *utctime;
+#        String str;
+#        String timestr;
+#        rawtime=(time_t) intime;
+#        timestr = ctime(&rawtime);
+#        utctime = gmtime(&rawtime);
+#        str =  std::to_string(utctime->tm_year+1970);
+#        return str;
+#    }')
+#    
+
 
 
     cat ("\n\n");
