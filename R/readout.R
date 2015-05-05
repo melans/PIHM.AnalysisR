@@ -7,27 +7,30 @@
 #' @export  output data.
 #' @return A TimeSeries data. This list require support of xts packages.
 #' @examples
-#' readout(fn)
+#' readout(ext='rivFlx1',binary=FALSE)
 
 
-readout <-function(fn,binary=FALSE){
+readout <-function(ext,binary=FALSE,nc){
 
 
     
     nargin <- nargs()
     if (nargin <1 ){
-        cat("\nUsage:\n\t data = readout(fn)\n");
+        cat("\nUsage:\n\t data = readout(extension, binary=FALSE,ncols)\n");
         cat("Where:\ndata = [T,data]\n");
+        cat("\tncols only required when binary=TRUE\n");
         cat("\n\n");
         return(0);
     }
-#==============================
-readpihmmf <- function(fn,binary){
-    if (binary){
-        mesh <- readmesh();
-        maxn=100*365*24*10000;
-        d <- readBin(fn,what=numeric(),n=maxn*mesh$size[1]);
 
+#==============================
+readpihmmf <- function(fn,binary,nc){
+    if (binary){
+        maxn=100*365*24*10000;
+        #x=readBin(fn,what=numeric(),n=maxn*mesh$size[1]);
+        d <- t(matrix(readBin(fn,what=numeric(),n=maxn*mesh$size[1]),nrow=nc+1));
+        t <- as.Date(sapply(d[,1],t2time),'%a %b %d %H:%M:%S %Y');
+        ts <- xts(d[,-1],order.by=t);
     }else{
         d <- read.table(fn);
         t <- as.Date(d[,1]);
@@ -46,19 +49,31 @@ readpihm20 <- function(fn){
 }
 #==============================
 
-    if (!file.exists(fn)){
-        cat("Error: file does not exist\n\t",c(fn), "\n");
-        return(0);
-    }
 
-    cat("\t Reading file \n\t\t ",as.character(fn) ,"\n");
+    #cat("\t Reading file \n\t\t ",as.character(fn) ,"\n");
     if (pihmver > 2.3){
-        ts <- readpihmmf(fn,binary);
+        if (binary){
+            fn=list.files(path=outpath,pattern=paste(projectname,'.',ext,'$',sep=''),full.names=TRUE);
+        }else{
+            fn=list.files(path=outpath,pattern=paste(projectname,'.',ext,'.txt$',sep=''),full.names=TRUE);
+        }
+        cat("\t Reading file \n\t\t ",as.character(fn) ,"\n");
+        if (length(fn)<=0){
+            stop('\n\t Error: File ',paste(projectname,'.',ext,'.txt',sep=''),' does not exist.\n\n')
+        }
+        if (file.exists(fn)){
+            ts <- readpihmmf(fn,binary,nc);
+        }else{
+            stop('\n\t Error: File ',paste(projectname,'.',ext,'.txt',sep=''),' does not exist.\n\n')
+#           cat('\n\t Error: File ',paste(projectname,'.',ext,'.txt',sep=''),' does not exist.\n\n');
+        }
     }
     else{
+        fn=list.files(path=outpath,pattern=paste(projectname,'.',ext,'*',sep=''),full.names=TRUE);
         ts <- readpihm20(fn);
     }
 
+    return(ts);
 }
 
 

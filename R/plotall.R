@@ -36,7 +36,7 @@ plotall <-function(data){
         if (!is.null(pihm[[i]])){
             cat(i,"\tplotting ",nm[i],"\n");
             imgfile=file.path(Resultpath,paste(as.character(nm[i]),".png",sep=''));
-            png(imgfile,width=1600, height=1600)
+            png(imgfile,width=1000, height=1000)
             matplot(pihm[[i]],type='l',ylab=nm[i])
             dev.off()
         }

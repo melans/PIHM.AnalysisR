@@ -12,6 +12,55 @@
 #' @examples
 #' PIHM()
  
-readout <-function(x){
-    print(x)
+mytest<-function(data,terrain=FALSE, zratio=0){
+    library(rgl)
+    mesh <- readmesh();
+    riv <- readriv();
+    msh <- mesh$mesh;
+    pts <- mesh$points;
+    x=pts[msh[,2],2]+pts[msh[,3],2]+pts[msh[,4],2];
+    y=pts[msh[,2],3]+pts[msh[,3],3]+pts[msh[,4],3];
+    z=pts[msh[,2],4]+pts[msh[,3],4]+pts[msh[,4],4];
+    xlim <- range(x);
+    ylim <- range(y);
+    dx=(xlim[2]-xlim[1])/100;
+    dy=dx; #(ylim[2]-ylim[1])/100;
+    xc <- seq(xlim[1], xlim[2],by=dx);
+    yc <- seq(ylim[1], ylim[2],by=dy);
+    if (missing('data')){
+        mat <- interp(x,y,z,xo=xc,yo=yc);
+        H=mat$z;
+    }else{
+        mdata <-interp(x,y,data,xo=xc,yo=yc);
+        if (terrain){
+            mat <- interp(x,y,z,xo=xc,yo=yc);
+            H <- mat$z + mdata$z;   # Terrain + spatial data
+        }else{
+            H <- mdata$z;
+        }
+    }
+    
+    Hlim <- round(range(H[!is.na(H)]))
+    dhdx <- diff(Hlim) / min(diff(xlim),diff(ylim));
+    if (dhdx < 1/10 ) {
+        zr <-  round(1/10/dhdx) ;
+        warning('\n\tdh/dx = ',round(dhdx,digits=5),'.\tZ ratio > ', zr, ' is recommended');
+        if (zratio <= 0){
+            zr <- zr;
+        }else{
+            zr <- zratio;
+        }
+    }
+
+    H <- H*zr;
+    Hlim <- round(range(H[!is.na(H)]))
+    Hlen <- Hlim[2] - Hlim[1] + 1
+    colorlut <- terrain.colors(Hlen,alpha=0) # height color lookup table
+    col <- colorlut[ H-Hlim[1]+1 ] # assign colors to heights for each point
+
+    open3d()
+
+    rgl.surface(xc, yc, H, color=col, alpha=0.75, back="lines")
+
+
     }

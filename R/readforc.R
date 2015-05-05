@@ -11,10 +11,10 @@
 #' @keywords read input. mesh file.
 #' @export  List of river data. river
 #' @examples
-#' readriv()
+#' readforc()
 
 
-readriv <-function(inpath="./",projectname=0,version=2.2){
+readforc <-function(){
     nargin <- nargs();
     if (nargin <1){
         print("\nUsage:\n\t readriv <-function(inpath=\"./\",projectname)\n");
@@ -22,25 +22,43 @@ readriv <-function(inpath="./",projectname=0,version=2.2){
         return(0);
     }
     
-    if (substring(inpath,nchar(inpath))=="/"){
-    }else{
-        inpath <- paste(inpath,"/",sep='');    
-    }
-    if (projectname==0){ # default: projenctname can be access from projectName.txt;
-        projectname=scan(paste(inpath,"projectName.txt",sep=''));
-    }
-    forcfile=paste(inpath,projectname,".forc",sep="");
+
+    forcfile=list.files(inpath,pattern=paste(projectname,".forc",sep=""),full.names=TRUE);
     
     if (!file.exists(forcfile)){
-        cat("Error: file does not exist\n\t",paste(riverfile), "\n");
-        return(0);
+        stop("Error: file does not exist\n\t",forcfile, "\n");
     }
     
-    
-    moveon=0;   #number of skip lines.
-    lines <- readLines(forcfile);
+ #number of skip lines.  
+    if (pihmver > 2.3){
+
+    }else{
+    }
+
+    readforcmf <- function(){ 
+        moveon=0;  
+        lines <- readLines(forcfile);
+        rid <- which(grepl('^num_meteo',tolower(lines)))
+        NumMeteoTS <- as.numeric(unlist(strsplit(lines[rid],' +'))[2]);
+        
+        rids <- which(grepl('^meteo_ts',tolower(lines)))
+        Forcing <- list();
+        for (i in 1:NumMeteoTS){
+            str <- unlist(strsplit(lines[rids[i]],' +'));
+            mid <- as.numeric(str[2]);
+            windHeight <- as.numeric(str[4])
+            if (i< NumMeteoTS){
+                matstr <- as.matrix(lines[rids[i]+3:rids[i+1]-1]);
+            }else{
+                matstr <- as.matrix(lines[rids[i]+3:length(lines)]);
+            }
+            t <- as.Date(matstr[,1]);
+            matdata <- as.numeric(matstr[,-1]);
+            ts <- xts(matdata,order.by = t);
+            Forcing[[i]] <- list("ID" = mid, "WindHeight" = windHeight, "ts" = ts);
+        }
+    }
 #forc head 
-    forcfile <- paste(inpath, projectname,".riv",sep='');
     nhead=scan(forcfile,what=integer(),blank.lines.skip = TRUE,nlines=1, skip=moveon );
         
 #Shape

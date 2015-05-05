@@ -16,26 +16,16 @@
 #' Q <- goQ(inpath="./", outpath="./", resultpath="./AnalysisResults/",ifplot=1, projectname=0,outlets=0)
 
 
-goQ <-function(inpath="./", outpath="./", resultpath="AnalysisResults/",ifplot=1, projectname=0,outlets=0){
-    nargin <- nargs();
-    if (nargin <1){
-        cat("\nUsage:\n\t Q <- goQ(inpath=\"./\", outpath=\"./\", resultpath=\"./AnalysisResults/\",ifplot=1, projectname=0,outlets=0)\n");
-        cat("\n\n");
-        return(0);
+goQ <-function(q,outlets){
+    if (missing(q)){
+        if (pihmver>2.3){
+            q=readout(ext='rivFlx1');
+        }
     }
-        source("/Users/leleshu/Dropbox/SuperTools/R/PIHM.AnalysisR/R/readout.R");
-    if (projectname==0){ # default: projenctname can be access from projectName.txt;
-        projfile=paste(inpath,"projectName.txt",sep='')
-        projectname=scan(projfile,what=character(),nlines=1);
-    }
-    if (outlets==0){
-        source("/Users/leleshu/Dropbox/SuperTools/R/PIHM.AnalysisR/R/readriv.R");
-        riv <-readriv(inpath,projectname)
-
+        riv <-readriv()
         outlets <- riv$River$outlets
-    }
     fn=paste(outpath,projectname,".rivFlx1.txt",sep="");
-
+    cat('Reading file: ',fn,'\n');
     Qall <- readout(fn);
 #    Q <- list("time"=Qall$time, "data"=Qall$data[,outlets],"ids"=outlets);
     Q <- Qall[,outlets];
@@ -46,7 +36,7 @@ goQ <-function(inpath="./", outpath="./", resultpath="AnalysisResults/",ifplot=1
             dir.create(resultpath)
         }
         imgfile=paste(resultpath,"Discharge.png",sep='')
-        png(imgfile,width=4, height=4, units="in", res=300)
+        png(imgfile,width=1600, height=1600)
         plot(Q,type='l')
         dev.off()
     }
