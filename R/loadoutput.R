@@ -15,16 +15,21 @@
 #' @examples
 #' loadoutputQ(outpath,projectname,inpath)
 
-loadoutput <-function(outpath="./",projectname,inpath){
+loadoutput <-function(){
 #   nargin <- nargs();
 #    if (nargin <1){
 #        cat("\nUsage:\n\t PIHMout <- loadoutput(outpath=\"./\",projectname)\n");
 #        cat("\n\n");
 #        return(0);
 #    }
+    if (pihmver >2.3){
+        flist <- list.files(path=outpath,pattern=paste(projectname,".*.txt",sep='') );
+        fpath <- list.files(path=outpath,pattern=paste(projectname,".*.txt",sep=''), full.names = TRUE );
+    }else{
+        flist <- list.files(path=outpath,pattern=paste(projectname,".*.dat",sep='') );
+        fpath <- list.files(path=outpath,pattern=paste(projectname,".*.dat",sep=''), full.names = TRUE );
 
-    flist <- list.files(path=outpath,pattern=paste(projectname,".*.txt",sep='') );
-    fpath <- list.files(path=outpath,pattern=paste(projectname,".*.txt",sep=''), full.names = TRUE );
+    }
     dataname <- substring(flist,nchar(projectname) + 2,nchar(flist) - 4)
     
         source("/Users/leleshu/Dropbox/SuperTools/R/PIHM.AnalysisR/R/readout.R");
@@ -33,25 +38,30 @@ loadoutput <-function(outpath="./",projectname,inpath){
     #out <- list("names"=dataname);  #Names of data;
     length(out) <- length(dataname);
     names(out) <- dataname;
-    msh <- readmesh(inpath,projectname);
+    msh <- readmesh();
     
     for( i in 1:length(fpath)){
-        d <- readout(fpath[i])
-        n=msh$size[[1]];
-        if (tolower(dataname[i])=="gw"){ # GW includes GW of cell and RiverBed.
-            gw=d[,c(1:n)];
-            bgw=d[,c(n:ncol(d))];
-            out$GW=gw;
-            out$Bgw=bgw;
+        if (file.info(fpath[i])$size >0){
+            #d <- readout(fpath[i])
+            d <- readout( dataname[i])
+            n=msh$size[[1]];
+            if (tolower(dataname[i])=="gw" && pihmver >2.3){ # GW includes GW of cell and RiverBed.
+                gw=d[,c(1:n)];
+                bgw=d[,c(n:ncol(d))];
+                out$GW=gw;
+                out$Bgw=bgw;
+            }
+            else{
+                out[[i]]=d;
+            }
+            m=nrow(d);
+            n=ncol(d);
+            cat("Size=[",m,",",n,"]\n");
+            #cmd=paste('out$',dataname[i],"=d",sep='')
+            #eval(parse(text=cmd))
+        }else{
+            cat('File is empty. ', flist[i],'\n');
         }
-        else{
-            out[[i]]=d;
-        }
-        m=nrow(d);
-        n=ncol(d);
-        cat("Size=[",m,",",n,"]\n");
-        #cmd=paste('out$',dataname[i],"=d",sep='')
-        #eval(parse(text=cmd))
     }
        return(out)
 }
