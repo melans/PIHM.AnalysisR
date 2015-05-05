@@ -1,4 +1,4 @@
-# PIHM-AnalysisR
+# PIHM.AnalysisR
 PIHM analysis R packages.
 
 The project just starts. 
