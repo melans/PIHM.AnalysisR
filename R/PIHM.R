@@ -177,28 +177,28 @@ PIHM <-function(indir, outdir,pname,ver){
             stop("Package not found")
     }
     
-   library(Rcpp)    #for converting time_t to R time&date
-    cppFunction('String  t2time( long int intime) {
-        time_t rawtime;
-        String timestr;
-        rawtime=(time_t) intime;
-        timestr = ctime(&rawtime);
-        return timestr;
-    }')
-    
 #   library(Rcpp)    #for converting time_t to R time&date
 #    cppFunction('String  t2time( long int intime) {
 #        time_t rawtime;
-#        struct tm *utctime;
-#        String str;
 #        String timestr;
 #        rawtime=(time_t) intime;
 #        timestr = ctime(&rawtime);
-#        utctime = gmtime(&rawtime);
-#        str =  std::to_string(utctime->tm_year+1970);
-#        return str;
+#        return timestr;
 #    }')
 #    
+   library(Rcpp)    #for converting time_t to R time&date
+    cppFunction('String  t2time( long int intime) {
+        time_t rawtime;
+        struct tm *utctime;
+        char result[100];
+        rawtime=(time_t) intime;
+        utctime = gmtime(&rawtime);
+        std::sprintf(result, "%4d-%2d-%2d %2d:%2d:%2d",
+            1900 + utctime->tm_year,  1 + utctime->tm_mon, utctime->tm_mday,
+           utctime->tm_hour,    utctime->tm_min, utctime->tm_sec
+            );
+        return result;
+    }')
 
 
 
