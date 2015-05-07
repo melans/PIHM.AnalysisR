@@ -8,31 +8,26 @@
 #' @return A list. att$att, att$points, att$size etc
 #' @export  List of att data.
 #' @examples
-#' readatt(inpath="./",projectname)
+#' readatt()
 
 
-readatt <-function(inpath="./",projectname){
-    nargin <- nargs();
-    if (nargin <1){
-        cat("\nUsage:\n\t readatt <-function(inpath=\"./\",projectname)\n");
-        cat("\n\n");
-        return(0);
-    }
-    
-    if (substring(inpath,nchar(inpath))=="/"){
-    }else{
-        inpath <- paste(inpath,"/",sep='');    
-    }
-    if (nargin <2){ # default: projenctname can be access from projectName.txt;
-        projectname=scan(paste(inpatth,"projectName.txt",sep=''));
-    }
+readatt <-function(fn){
+  if (missing(fn)){
+        attfile <- file.path(inpath, paste(projectname,".att",sep=''));
+  }else{
+        attfile <- fn
+  }
 
-attfile <- paste(inpath, projectname,".att",sep='');
-atthead=scan(attfile,what=character(),nlines=1,blank.lines.skip = TRUE);
+if (!file.exists(attfile)){
+    stop ("\n\n\nAtt file \'", attfile , "\' is missing\n\n");
+}
+if (pihmver >2.3){
+    atthead=scan(attfile,what=character(),nlines=1,blank.lines.skip = TRUE);
+}else{
+    atthead=c( "IND",  "SOIL", "GEOL", "LC",   "CMC",  "SNOWH","HSFC", "UNSAT","GW",  "METEO","LAI",  "SS",   "BC0",  "BC1",  "BC2",  "MACP")
+}
+cat(pihmver)
 matatt <-t( matrix (scan(attfile,what=integer(),skip=1,blank.lines.skip = TRUE), nrow=16))
 colnames(matatt)=atthead;
-
-#att <-list("att"=matatt, "headeratt"=atthead);
-
 return(matatt);
 }
