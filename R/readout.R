@@ -10,7 +10,7 @@
 #' readout(ext='rivFlx1',binary=FALSE)
 
 
-readout <-function(ext,binary=TRUE){
+readout <-function(ext,binary=TRUE, ncol){
 
 
     
@@ -24,13 +24,11 @@ readout <-function(ext,binary=TRUE){
     }
 
 #==============================
-readpihmmf <- function(fn,binary){
+readpihmmf <- function(fn,binary,ncol){
     if (binary){
         maxn=365*24*10000; # maximum = hourly 10000 year * ncells 
-        mesh <- readmesh();
-        nc=mesh$size[1];    # number of cells in mesh.
         #x=readBin(fn,what=numeric(),n=maxn*mesh$size[1]);
-        d <- t(matrix(readBin(fn,what=numeric(),n=maxn*mesh$size[1]),nrow=nc+1));
+        d <- t(matrix(readBin(fn,what=numeric(),n=maxn*mesh$size[1]),nrow=ncol+1));
         t <- as.POSIXct(strptime(sapply(d[,1],t2time),'%Y-%m-%d %H:%M:%S','UTC') );
         ts <- xts(d[,-1],order.by=t);
     }else{
@@ -39,6 +37,7 @@ readpihmmf <- function(fn,binary){
         data <- d[,-1];
         ts <- xts(data,order.by=t);
     }
+        message(fn);
     return(ts);
 }
 readpihm20 <- function(fn){
@@ -64,7 +63,7 @@ readpihm20 <- function(fn){
             stop('\n\t Error: File ',paste(projectname,'.',ext,'.txt',sep=''),' does not exist.\n\n')
         }
         if (file.exists(fn)){
-            ts <- readpihmmf(fn,binary);
+            ts <- readpihmmf(fn,binary,ncol);
         }else{
             stop('\n\t Error: File ',paste(projectname,'.',ext,'.txt',sep=''),' does not exist.\n\n')
 #           cat('\n\t Error: File ',paste(projectname,'.',ext,'.txt',sep=''),' does not exist.\n\n');

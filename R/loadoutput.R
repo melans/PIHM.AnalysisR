@@ -39,11 +39,20 @@ loadoutput <-function(){
     length(out) <- length(dataname);
     names(out) <- dataname;
     msh <- readmesh();
-    
+    riv <- readriv(); 
     for( i in 1:length(fpath)){
         if (file.info(fpath[i])$size >0){
+            message(fpath[i]);
+            nc <- mesh$size[1] ;
+            if ( grepl('^riv',tolower(dataname[i])) || grepl('^stage',tolower(dataname[i])) ) {
+                nc <- riv$River$size 
+            }
+            if (  grepl('^gw',tolower(dataname[i])) ){
+                nc <- mesh$size[1] + riv$River$size;
+            }
+            
             #d <- readout(fpath[i])
-            d <- readout( dataname[i])
+            d <- readout( dataname[i],binary=TRUE,nc)
             n=msh$size[[1]];
             if (tolower(dataname[i])=="gw" && pihmver >2.3){ # GW includes GW of cell and RiverBed.
                 gw=d[,c(1:n)];
