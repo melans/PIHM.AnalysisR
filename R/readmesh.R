@@ -14,24 +14,24 @@
 readmesh <-function(){
     meshfile <- file.path(inpath, paste(projectname,".mesh",sep=''));
     if (pihmver >=2.4 ){
-        ncell=scan(meshfile,what=integer(),nmax=1,blank.lines.skip = TRUE);
-        mshhead=scan(meshfile,what=character(),nlines=1,blank.lines.skip = TRUE);
+        ncell=scan(meshfile,what=integer(),nmax=1,blank.lines.skip = TRUE,quiet = TRUE);
+        mshhead=scan(meshfile,what=character(),nlines=1,blank.lines.skip = TRUE,quiet = TRUE);
 
-        msh <-t( matrix (scan(meshfile,what=integer(),skip=1,nlines=ncell,blank.lines.skip = TRUE), ncol=ncell))
+        msh <-t( matrix (scan(meshfile,what=integer(),skip=1,nlines=ncell,blank.lines.skip = TRUE,quiet = TRUE), ncol=ncell))
 
-        npt=scan(meshfile,what=integer(),nmax=1,skip=ncell+1,blank.lines.skip = TRUE);
-        pthead=scan(meshfile,what=character(),nlines=1,skip=ncell+1,blank.lines.skip = TRUE);
-        pt <-t( matrix (scan(meshfile,what=double(),skip=ncell+2,nlines=ncell,blank.lines.skip = TRUE), ncol=npt))
+        npt=scan(meshfile,what=integer(),nmax=1,skip=ncell+1,blank.lines.skip = TRUE,quiet = TRUE);
+        pthead=scan(meshfile,what=character(),nlines=1,skip=ncell+1,blank.lines.skip = TRUE,quiet = TRUE);
+        pt <-t( matrix (scan(meshfile,what=double(),skip=ncell+2,nlines=ncell,blank.lines.skip = TRUE,quiet = TRUE), ncol=npt))
 
         colnames(msh)= c("ID",mshhead[-1]) 
         colnames(pt)=c("ID",pthead[-1]);
     }
     else{
-        num=scan(meshfile,what=integer(),nmax=2,blank.lines.skip = TRUE);
+        num=scan(meshfile,what=integer(),nmax=2,blank.lines.skip = TRUE,quiet = TRUE);
         ncell=num[1];
         npt=num[2];
-        msh <-t( matrix (scan(meshfile,what=integer(),skip=1,nlines=ncell,blank.lines.skip = TRUE), ncol=ncell))
-        pt <-t( matrix (scan(meshfile,what=double(),skip=ncell+1,nlines=ncell,blank.lines.skip = TRUE), ncol=npt))
+        msh <-t( matrix (scan(meshfile,what=integer(),skip=1,nlines=ncell,blank.lines.skip = TRUE,quiet = TRUE), ncol=ncell))
+        pt <-t( matrix (scan(meshfile,what=double(),skip=ncell+1,nlines=ncell,blank.lines.skip = TRUE,quiet = TRUE), ncol=npt))
 
         colnames(msh) <- c("ID","NODE1","NODE2","NODE3","NABR1","NABR2","NABR3")
         colnames(pt) <- c("ID", "X","Y","ZMIN","ZMAX");

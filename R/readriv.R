@@ -19,29 +19,29 @@ readriv <-function(){
     moveon =0 ;
     lines <- readLines(rivfile);
 # riv
-    nriv=scan(rivfile,what=integer(),nmax=1,blank.lines.skip = TRUE,skip=moveon );
-    rivhead=scan(rivfile,what=character(),nlines=1,blank.lines.skip = TRUE,skip=moveon);
-    riv <-t( matrix (scan(rivfile,what=integer(),nlines=nriv,blank.lines.skip = TRUE,skip=moveon+1), ncol=nriv))
+    nriv=scan(rivfile,what=integer(),nmax=1,blank.lines.skip = TRUE,quiet = TRUE,skip=moveon );
+    rivhead=scan(rivfile,what=character(),nlines=1,blank.lines.skip = TRUE,quiet = TRUE,skip=moveon);
+    riv <-t( matrix (scan(rivfile,what=integer(),nlines=nriv,blank.lines.skip = TRUE,quiet = TRUE,skip=moveon+1), ncol=nriv))
     outlets=which(riv[,4]<0);
 #Shape
     moveon=which(tolower(lines) == "shape")
-    nshp=scan(rivfile,what=integer(),nmax=1,blank.lines.skip = TRUE,skip=moveon);
-    shphead=scan(rivfile,what=character(),nlines=1,blank.lines.skip = TRUE,skip=moveon);
-    shp <-t( matrix (scan(rivfile,what=numeric(),nlines=nshp,blank.lines.skip = TRUE,skip=moveon+1), ncol=nshp))
+    nshp=scan(rivfile,what=integer(),nmax=1,blank.lines.skip = TRUE,quiet = TRUE,skip=moveon);
+    shphead=scan(rivfile,what=character(),nlines=1,blank.lines.skip = TRUE,quiet = TRUE,skip=moveon);
+    shp <-t( matrix (scan(rivfile,what=numeric(),nlines=nshp,blank.lines.skip = TRUE,quiet = TRUE,skip=moveon+1), ncol=nshp))
     
 
 #Materials
     moveon=which(tolower(lines) == "material")
-    nmat=scan(rivfile,what=integer(),nmax=1,blank.lines.skip = TRUE,skip=moveon);
-    mathead=scan(rivfile,what=character(),nlines=1,blank.lines.skip = TRUE,skip=moveon);
-    mat <-t( matrix (scan(rivfile,what=numeric(),nlines=nmat,blank.lines.skip = TRUE,skip=moveon+1), ncol=nmat))
+    nmat=scan(rivfile,what=integer(),nmax=1,blank.lines.skip = TRUE,quiet = TRUE,skip=moveon);
+    mathead=scan(rivfile,what=character(),nlines=1,blank.lines.skip = TRUE,quiet = TRUE,skip=moveon);
+    mat <-t( matrix (scan(rivfile,what=numeric(),nlines=nmat,blank.lines.skip = TRUE,quiet = TRUE,skip=moveon+1), ncol=nmat))
     
 
 #IC
     moveon=which(tolower(lines) == "ic")
-    nic=scan(rivfile,what=integer(),nmax=1,blank.lines.skip = TRUE,skip=moveon);
-    ichead=scan(rivfile,what=character(),nlines=1,blank.lines.skip = TRUE,skip=moveon);
-    ic <-t( matrix (scan(rivfile,what=numeric(),nlines=nic,blank.lines.skip = TRUE,skip=moveon+1), ncol=nic))
+    nic=scan(rivfile,what=integer(),nmax=1,blank.lines.skip = TRUE,quiet = TRUE,skip=moveon);
+    ichead=scan(rivfile,what=character(),nlines=1,blank.lines.skip = TRUE,quiet = TRUE,skip=moveon);
+    ic <-t( matrix (scan(rivfile,what=numeric(),nlines=nic,blank.lines.skip = TRUE,quiet = TRUE,skip=moveon+1), ncol=nic))
     
 #BC
 #    moveon=which(tolower(lines) == "bc")

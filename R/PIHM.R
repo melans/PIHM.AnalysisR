@@ -148,7 +148,9 @@ PIHM <-function(indir, outdir,pname,ver){
 
    PIHMdir <- PIHM.path(indir,outdir,pname,ver=ver)   
    PIHM.path();
-
+    pihmin <- loadinput();
+   assign("PIHMIN",pihmin , envir = .GlobalEnv)  
+   
     if (!require(xts))
     {
         cat('\n\n Trying to install xts package\n');
@@ -169,6 +171,14 @@ PIHM <-function(indir, outdir,pname,ver){
         if(!require(akima)) 
             stop("Package not found")
     }
+    if (!require(hydroGOF))
+    {
+        cat('\n\n Trying to install hydroGOF package\n');
+        install.packages("hydroGOF",dep=TRUE,repos='http://cran.us.r-project.org')
+        if(!require(hydroGOF)) 
+            stop("Package not found")
+    }
+    
     if (!require(quantmod))
     {
         cat('\n\n Trying to install quantmod package\n');
@@ -177,15 +187,8 @@ PIHM <-function(indir, outdir,pname,ver){
             stop("Package not found")
     }
     
-#   library(Rcpp)    #for converting time_t to R time&date
-#    cppFunction('String  t2time( long int intime) {
-#        time_t rawtime;
-#        String timestr;
-#        rawtime=(time_t) intime;
-#        timestr = ctime(&rawtime);
-#        return timestr;
-#    }')
-#    
+    
+
    library(Rcpp)    #for converting time_t to R time&date
     cppFunction('String  t2time( long int intime) {
         time_t rawtime;
