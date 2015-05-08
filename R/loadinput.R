@@ -208,3 +208,15 @@ return(mat);
 #============ #============
 readlc <-function(fn){
 }
+
+projectInfo <- function (print=FALSE){
+    if (missing('PIHMIN')){
+        PIHMIN <- loadinput();
+         assign("PIHMIN",pihmin , envir = .GlobalEnv)  
+    }
+    else{
+        message('\ninpath =', inpath);
+        message('\nprojectname = ', projectname);
+        
+
+
