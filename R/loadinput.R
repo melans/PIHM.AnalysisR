@@ -98,20 +98,27 @@ if (!file.exists(theFile)){
     stop ("\n\n\n .calib file \'", theFile , "\' is missing\n\n");
 }
 
-calib <- list();
 namelist <- character()
 comments <- character();
-
+value <- vector()
+offon <- logical(length(namelist));
 if (pihmver >2.3){
     lines <- readLines(theFile);   
     i=0; 
     for(k in 1:length(lines) ){
         str <- scan(text=lines[k],what=character(),quiet = TRUE);
+        keyword <- str[1];
         if (grepl("^[[:digit:]]",str[2]) && nchar(str[2])<10 && !grepl("^#$",str[1]) ){
 #            cat (i ,'\t',str,'\n')
             i=i+1;
-            namelist[i]=str[1];
-            calib[[i]]=as.numeric(str[2]);
+            offon[i] <- TRUE
+            while (grepl("^#",keyword) ){
+                keyword <- substr(keyword,2,nchar(keyword))
+                offon[i] <- FALSE
+            }
+            namelist[i]=keyword;
+            value[i]=as.numeric(str[2]);
+            names(value[i]) <- keyword
             if (length(str)>2 ){
                 comments[i] <- toString(str[-c(1,2)]) ;
             }else{
@@ -119,21 +126,40 @@ if (pihmver >2.3){
             }
         }
     }
-    names(calib) <- namelist;
-    offon <- logical(length(namelist));
-    for (i in 1:length(namelist)){
-        if (grepl("^#",namelist[i])) {# if line start with '#', means off;
-            offon[i]<-FALSE
+
+    names(value) <- namelist;
+
+
+#    for (i in 1:length(namelist)){
+#        if (grepl("^#",namelist[i])) {# if line start with '#', means off;
+#            offon[i] <- FALSE
+#        }else{
+#            offon[i] <- TRUE
+#        }
+#    }
+    onid <- which(offon);    
+    dup <- which(duplicated(namelist[onid]) );    
+    if (length(dup)>0){
+        for (i in dup) {
+            warning('Duplicated calibration parameter is set. You may get unexpected results. \n',
+                    namelist[i],' = ',value[i],'\n');
         }
+        undup <- which(!duplicated(namelist[onid]) );   
+        value <- value[undup];
+        offon <- offon[undup];
+        names <- namelist[undup];
     }
-    calib$offon<-offon;
-    calib$comments <- comments;
+    calib <- list('value'=value,
+                  'offon'= offon, 
+                  'comments' = comments);
 }
 else{
     #read .calib file for pihm v2.0 - 2.2
 }
     return(calib);
 }
+
+
 #============ #============
 #============ #============
 readinit <- function(ncell,nriv){
@@ -151,8 +177,8 @@ if (!file.exists(theFile)){
     a<-lapply(lines,function(x) scan(text=x,what=numeric(),quiet = TRUE));
     lid <- which(lapply(a,length)==length(mhead));
 #    minit<-do.call(rbind,a[lid])    # both lines work.
-    minit <- matrix(unlist(a[lid]),ncol=length(mhead)); #,nrow=length(lid))
-    rinit <- matrix(unlist(a[-lid]),ncol=length(rhead)); #nrow=length(a)-length(lid))    
+    minit <- t(matrix(unlist(a[lid]),nrow=length(mhead)) ); #,nrow=length(lid))
+    rinit <- t(matrix(unlist(a[-lid]),nrow=length(rhead)) ); #nrow=length(a)-length(lid))    
     colnames(minit)= mhead
     colnames(rinit)= rhead;
 
@@ -219,4 +245,5 @@ projectInfo <- function (print=FALSE){
         message('\nprojectname = ', projectname);
         
 
-
+    }
+}
