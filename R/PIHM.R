@@ -146,10 +146,14 @@ PIHM <-function(indir, outdir,pname,ver){
         }
     }else{ ver=pihmver;}
 
-   PIHMdir <- PIHM.path(indir,outdir,pname,ver=ver)   
-   PIHM.path();
-    pihmin <- loadinput();
-   assign("PIHMIN",pihmin , envir = .GlobalEnv)  
+    if ( exists('MAX_THREADS') ) {
+        MAX_THREADS = MAX_THREADS
+    }else{
+        MAX_THREADS=as.numeric(system('sysctl -n hw.ncpu',intern=TRUE))*2 
+    }
+     assign("MAX_THREADS",MAX_THREADS , envir = .GlobalEnv)
+
+
    
     if (!require(xts))
     {
@@ -187,9 +191,7 @@ PIHM <-function(indir, outdir,pname,ver){
             stop("Package not found")
     }
     
-    
-
-   library(Rcpp)    #for converting time_t to R time&date
+     library(Rcpp)    #for converting time_t to R time&date
     cppFunction('String  t2time( long int intime) {
         time_t rawtime;
         struct tm *utctime;
@@ -204,6 +206,10 @@ PIHM <-function(indir, outdir,pname,ver){
     }')
 
 
+   PIHMdir <- PIHM.path(indir,outdir,pname,ver=ver)   
+   PIHM.path();
+#    pihmin <- loadinput();
+#   assign("PIHMIN",pihmin , envir = .GlobalEnv)  
 
     cat ("\n\n");
     return(PIHMdir);
