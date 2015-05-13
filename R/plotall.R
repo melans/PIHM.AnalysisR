@@ -49,3 +49,8 @@ plotall <-function(data){
 
 }
 
+pihmplot <- function (ts ){
+    
+
+}
+
