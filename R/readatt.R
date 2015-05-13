@@ -22,12 +22,11 @@ if (!file.exists(attfile)){
     stop ("\n\n\nAtt file \'", attfile , "\' is missing\n\n");
 }
 if (pihmver >2.3){
-    atthead=scan(attfile,what=character(),nlines=1,blank.lines.skip = TRUE);
+    atthead=scan(attfile,what=character(),nlines=1,quiet = TRUE,blank.lines.skip = TRUE);
 }else{
     atthead=c( "IND",  "SOIL", "GEOL", "LC",   "CMC",  "SNOWH","HSFC", "UNSAT","GW",  "METEO","LAI",  "SS",   "BC0",  "BC1",  "BC2",  "MACP")
 }
-cat(pihmver)
-matatt <-t( matrix (scan(attfile,what=integer(),skip=1,blank.lines.skip = TRUE), nrow=16))
+matatt <-t( matrix (scan(attfile,what=integer(),skip=1,quiet = TRUE,blank.lines.skip = TRUE), nrow=16))
 colnames(matatt)=atthead;
 return(matatt);
 }
