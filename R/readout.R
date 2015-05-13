@@ -10,24 +10,12 @@
 #' readout(ext='rivFlx1',binary=FALSE)
 
 
-readout <-function(ext,binary=TRUE, ncol){
-
-
-    
-    nargin <- nargs()
-    if (nargin <1 ){
-        cat("\nUsage:\n\t data = readout(extension, binary=FALSE,ncols)\n");
-        cat("Where:\ndata = [T,data]\n");
-        cat("\tncols only required when binary=TRUE\n");
-        cat("\n\n");
-        return(0);
-    }
-
 #==============================
 readpihmmf <- function(fn,binary,ncol){
     if (binary){
         maxn=365*24*10000; # maximum = hourly 10000 year * ncells 
         #x=readBin(fn,what=numeric(),n=maxn*mesh$size[1]);
+        mesh <- readmesh();
         d <- t(matrix(readBin(fn,what=numeric(),n=maxn*mesh$size[1]),nrow=ncol+1));
         t <- as.POSIXct(strptime(sapply(d[,1],t2time),'%Y-%m-%d %H:%M:%S','UTC') );
         ts <- xts(d[,-1],order.by=t);
@@ -51,6 +39,19 @@ readpihm20 <- function(fn){
 #==============================
 
 
+readout <-function(ext,binary=TRUE, ncol){
+
+
+    
+    nargin <- nargs()
+    if (nargin <1 ){
+        cat("\nUsage:\n\t data = readout(extension, binary=FALSE,ncols)\n");
+        cat("Where:\ndata = [T,data]\n");
+        cat("\tncols only required when binary=TRUE\n");
+        cat("\n\n");
+        return(0);
+    }
+
     #cat("\t Reading file \n\t\t ",as.character(fn) ,"\n");
     if (pihmver > 2.3){
         if (binary){
@@ -63,6 +64,10 @@ readpihm20 <- function(fn){
             stop('\n\t Error: File ',paste(projectname,'.',ext,'.txt',sep=''),' does not exist.\n\n')
         }
         if (file.exists(fn)){
+            if (grepl('^riv',ext)){
+                riv <- readriv();
+                ncol <- riv$River$size;
+            }
             ts <- readpihmmf(fn,binary,ncol);
         }else{
             stop('\n\t Error: File ',paste(projectname,'.',ext,'.txt',sep=''),' does not exist.\n\n')
