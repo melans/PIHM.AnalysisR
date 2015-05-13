@@ -154,44 +154,30 @@ PIHM <-function(indir, outdir,pname,ver){
      assign("MAX_THREADS",MAX_THREADS , envir = .GlobalEnv)
 
 
-   
-    if (!require(xts))
-    {
-        cat('\n\n Trying to install xts package\n');
-        install.packages("xts",dep=TRUE,repos='http://cran.us.r-project.org')
-        if(!require(xts)) stop("Package not found")
-    }
-    if (!require(geometry))
-    {
-        cat('\n\n Trying to install geometry package\n');
-        install.packages("geometry",dep=TRUE,repos='http://cran.us.r-project.org')
-        if(!require(rgl)) 
-            stop("Package not found")
-    }
-    if (!require(akima))
-    {
-        cat('\n\n Trying to install quantmod package\n');
-        install.packages("akima",dep=TRUE,repos='http://cran.us.r-project.org')
-        if(!require(akima)) 
-            stop("Package not found")
-    }
-    if (!require(hydroGOF))
-    {
-        cat('\n\n Trying to install hydroGOF package\n');
-        install.packages("hydroGOF",dep=TRUE,repos='http://cran.us.r-project.org')
-        if(!require(hydroGOF)) 
-            stop("Package not found")
-    }
-    
-    if (!require(quantmod))
-    {
-        cat('\n\n Trying to install quantmod package\n');
-        install.packages("quantmod",dep=TRUE,repos='http://cran.us.r-project.org')
-        if(!require(quantmod)) 
-            stop("Package not found")
-    }
-    
-     library(Rcpp)    #for converting time_t to R time&date
+  liblist=c('xts', #for time-series.
+            'geometry',# for ploting 3D.
+            'akima',
+            'hydroGOF',#good of fit for Hydrograph
+            'quantmod',
+            'Rcpp', #for time_t to time.
+            'EGRET','dataRetrieval' #for downloading USGS data
+            );
+      
+  
+  for (i in 1:length(liblist)){
+      libname <- liblist[i];
+      if(require(libname,character.only=TRUE)){
+          message(libname," is loaded correctly.")
+      } else {
+          message("... \ttrying to install ",libname)
+          install.packages(libname, dep=TRUE,repos='http://cran.us.r-project.org')
+          if(require(libname)){
+              message(libname," installed and loaded.")
+          } else {
+              stop("Could not install ",libname)
+          }
+      }
+  }
     cppFunction('String  t2time( long int intime) {
         time_t rawtime;
         struct tm *utctime;
