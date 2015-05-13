@@ -12,7 +12,26 @@
 #' @export
 #' @examples
 #' PIHM()
-
+loadinglib <- function(liblist,quiet=TRUE){
+         
+  
+  for (i in 1:length(liblist)){
+      libname <- liblist[i];
+      if(require(libname,character.only=TRUE)){
+          if (!quiet){
+            message(libname," is loaded correctly.")
+          }
+      } else {
+          message("... \ttrying to install ",libname)
+          install.packages(libname, dep=TRUE,repos='http://cran.us.r-project.org')
+          if(require(libname)){
+              message(libname," installed and loaded.")
+          } else {
+              stop("Could not install ",libname)
+          }
+      }
+  }
+}
 PIHM.path <- function(indir, outdir,pname,minfodir,resdir,ver ){
     m=0;
     if (nargs() <1){
@@ -162,22 +181,10 @@ PIHM <-function(indir, outdir,pname,ver){
             'Rcpp', #for time_t to time.
             'EGRET','dataRetrieval' #for downloading USGS data
             );
-      
+  loadinglib(liblist,quiet=FALSE);
+
+
   
-  for (i in 1:length(liblist)){
-      libname <- liblist[i];
-      if(require(libname,character.only=TRUE)){
-          message(libname," is loaded correctly.")
-      } else {
-          message("... \ttrying to install ",libname)
-          install.packages(libname, dep=TRUE,repos='http://cran.us.r-project.org')
-          if(require(libname)){
-              message(libname," installed and loaded.")
-          } else {
-              stop("Could not install ",libname)
-          }
-      }
-  }
     cppFunction('String  t2time( long int intime) {
         time_t rawtime;
         struct tm *utctime;
