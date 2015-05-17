@@ -23,22 +23,20 @@ loadoutput <-function(){
 #        return(0);
 #    }
     if (pihmver >2.3){
-        flist <- list.files(path=outpath,pattern=paste(projectname,".*.txt",sep='') );
-        fpath <- list.files(path=outpath,pattern=paste(projectname,".*.txt",sep=''), full.names = TRUE );
+        flist <- list.files(path=outpath,pattern=paste(projectname,".*.dat$",sep='') );
+        fpath <- list.files(path=outpath,pattern=paste(projectname,".*.dat$",sep=''), full.names = TRUE );
     }else{
-        flist <- list.files(path=outpath,pattern=paste(projectname,".*.dat",sep='') );
-        fpath <- list.files(path=outpath,pattern=paste(projectname,".*.dat",sep=''), full.names = TRUE );
+        flist <- list.files(path=outpath,pattern=paste(projectname,".*.dat$",sep='') );
+        fpath <- list.files(path=outpath,pattern=paste(projectname,".*.dat$",sep=''), full.names = TRUE );
 
     }
     dataname <- substring(flist,nchar(projectname) + 2,nchar(flist) - 4)
     
-        source("/Users/leleshu/Dropbox/SuperTools/R/PIHM.AnalysisR/R/readout.R");
-        source("/Users/leleshu/Dropbox/SuperTools/R/PIHM.AnalysisR/R/readmesh.R");
     out <-list(); # initialize the return list.
     #out <- list("names"=dataname);  #Names of data;
     length(out) <- length(dataname);
     names(out) <- dataname;
-    msh <- readmesh();
+    mesh <- readmesh();
     riv <- readriv(); 
     for( i in 1:length(fpath)){
         if (file.info(fpath[i])$size >0){
@@ -47,22 +45,9 @@ loadoutput <-function(){
             if ( grepl('^riv',tolower(dataname[i])) || grepl('^stage',tolower(dataname[i])) ) {
                 nc <- riv$River$size 
             }
-            if (  grepl('^gw',tolower(dataname[i])) ){
-                nc <- mesh$size[1] + riv$River$size;
-            }
-            
-            #d <- readout(fpath[i])
             d <- readout( dataname[i],binary=TRUE,nc)
-            n=msh$size[[1]];
-            if (tolower(dataname[i])=="gw" && pihmver >2.3){ # GW includes GW of cell and RiverBed.
-                gw=d[,c(1:n)];
-                bgw=d[,c(n:ncol(d))];
-                out$GW=gw;
-                out$Bgw=bgw;
-            }
-            else{
-                out[[i]]=d;
-            }
+            n=mesh$size[[1]];
+            out[[i]]=d;
             m=nrow(d);
             n=ncol(d);
             cat("Size=[",m,",",n,"]\n");

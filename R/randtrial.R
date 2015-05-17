@@ -128,18 +128,43 @@ randtrial  <- function(){
    if ( !grepl('^y', tolower(line)) ){
        stop(' Abort. \n');
    }
-   message('\n\nStart parrellel processes\n');
+   message('\n\nStart parrellel processes\t',Sys.time(),'\n');
     foreach(i=1:nsets)         %dopar%  
     {   
-        lag = (i-1)*10;
+        lag = round(rnorm(1,ncores*2)*((i-1) %% ncores ) );   #lag time before start PIHM.
         message('lag = ',lag,'\n');
-        system(paste('sleep', as.character(lag) ) ,wait=TRUE );
+        null <- system(paste('sleep', as.character(lag) ) ,wait=TRUE );
         writecalib(sets[[i]]);
-        message('Trial #', i, 'starts.');
-         system(paste('./PIHM-MF ',projectname) ,ignore.stdout = FALSE, intern=TRUE, ignore.stderr = FALSE);
+        message('Trial #', i, ' starts. \t@',Sys.time(),'\n');
+        null <- system(paste('./PIHM-MF ',projectname) ,ignore.stdout = FALSE, intern=TRUE, ignore.stderr = FALSE);
         
-        message('Trial #', i, ' is finished. ' );
+        message('\t\tTrial #', i, ' is finished. \t@',Sys.time(),'\n' );
     }
 
 }
+testdopar  <- function(){
+    nsets=10;
+    ncores=5;
+      library(doParallel)
+    registerDoParallel(cores=ncores)
+   message('\n\n',nsets,' trials are waiting for resources. There are ', ncores,' workers available.\n\n');
+   null <- system('echo > log.txt');
+   message('Go on ? (yes/no) ');
+   line <- readline()
+   if ( !grepl('^y', tolower(line)) ){
+       stop(' Abort. \n');
+   }
+   
+   message('\n\nStart parrellel processes\t',Sys.time(),'\n');
+    foreach(i=1:nsets)         %dopar%  
+    {   
+        lag = round(rnorm(1,ncores*2)*((i-1) %% ncores ) );   #lag time before start PIHM.
+        message('lag = ',lag,'\n');
+        null <- system(paste('sleep', as.character(lag) ) ,wait=TRUE );
+        message('Trial #', i, ' starts. \t@',Sys.time(),'\n');
+        null <- system(paste('echo ',i,'  ',Sys.time(),'   ',lag,'>>log.txt') ,ignore.stdout = FALSE, intern=TRUE, ignore.stderr = FALSE);
+        
+        message('\t\tTrial #', i, ' is finished. \t@',Sys.time(),'\n' );
+    }
 
+}

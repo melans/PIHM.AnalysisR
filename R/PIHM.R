@@ -96,6 +96,8 @@ PIHM.path <- function(indir, outdir,pname,minfodir,resdir,ver ){
     }else{
         assign("Resultpath",file.path(outpath,'PIHMAnalysis') , envir = .GlobalEnv) #ResultPath for analysis.
     }
+    assign("outdirname",'PIHMAnalysis/' , envir = .GlobalEnv)
+
     if( !file.exists(ModelInfopath) ){ dir.create(ModelInfopath)};
     if( !file.exists(Resultpath) ){ dir.create(Resultpath)};
     PIHMdir <- list(inpath,outpath,  projectname, ModelInfopath, Resultpath,pihmver);
@@ -184,6 +186,16 @@ PIHM <-function(indir, outdir,pname,ver){
   loadinglib(liblist,quiet=FALSE);
 
 
+
+   PIHMdir <- PIHM.path(indir,outdir,pname,ver=ver)   
+   PIHM.path();
+#    pihmin <- loadinput();
+#   assign("PIHMIN",pihmin , envir = .GlobalEnv)  
+
+    cat ("\n\n");
+    return(PIHMdir);
+}
+
   
     cppFunction('String  t2time( long int intime) {
         time_t rawtime;
@@ -197,15 +209,5 @@ PIHM <-function(indir, outdir,pname,ver){
             );
         return result;
     }')
-
-
-   PIHMdir <- PIHM.path(indir,outdir,pname,ver=ver)   
-   PIHM.path();
-#    pihmin <- loadinput();
-#   assign("PIHMIN",pihmin , envir = .GlobalEnv)  
-
-    cat ("\n\n");
-    return(PIHMdir);
-}
 
 

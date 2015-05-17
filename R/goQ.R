@@ -16,26 +16,26 @@
 #' Q <- goQ(inpath="./", outpath="./", resultpath="./AnalysisResults/",ifplot=1, projectname=0,outlets=0)
 
 
-goQ <-function(q,outlets){
+goQ <-function(q,outlets,ifplot=FALSE){
     if (missing(q)){
         if (pihmver>2.3){
-            q=readout(ext='rivFlx1');
+            q=readout(ext='rivFlx1',binary=TRUE);
         }
     }
+    if ( missing(outlets) ){
         riv <-readriv()
         outlets <- riv$River$outlets
-    fn=paste(outpath,projectname,".rivFlx1.txt",sep="");
-    cat('Reading file: ',fn,'\n');
-    Qall <- readout(fn);
+    }
+
 #    Q <- list("time"=Qall$time, "data"=Qall$data[,outlets],"ids"=outlets);
-    Q <- Qall[,outlets];
+    Q <- q[,outlets];
         print("Load successfully");
 
     if (ifplot){
-        if (!file.exists(resultpath)){  #make the result folder
-            dir.create(resultpath)
+        if (!file.exists(Resultpath)){  #make the result folder
+            dir.create(Resultpath)
         }
-        imgfile=paste(resultpath,"Discharge.png",sep='')
+        imgfile=file.path(Resultpath,"Discharge.png")
         png(imgfile,width=1600, height=1600)
         plot(Q,type='l')
         dev.off()

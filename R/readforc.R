@@ -107,6 +107,26 @@ readforcmf <- function(){
     #rawForcing$Unit <- c("kg/m2/s","K","%","m/s","W/m2","W/m2","Pa");
     return(rawForcing)
 }
+
+
+plotforc <- function(forc){
+    if (missing(forc)){
+        forc <- readforc();
+    }
+    
+    names=names(forc);
+    for(i in 1:length(names)){
+        imgfile=file.path(ModelInfopath,paste(names[i],".png",sep=''))
+        png(imgfile,width=1600, height=1600)
+        q <- forc[[names[i]]]
+        n =length(q)-1;
+        qq <- q[[i]];
+#        qq <- colMeans(q[1:n]);
+        plot(qq,type='l')
+        dev.off() 
+    }
+
+}
 #==================================================
 #       read forc for 2.0 version 
 #==================================================

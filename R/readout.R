@@ -12,9 +12,10 @@
 
 #==============================
 readpihmmf <- function(fn,binary,ncol){
+    #    message(fn);
     if (binary){
-        maxn=365*24*10000; # maximum = hourly 10000 year * ncells 
         #x=readBin(fn,what=numeric(),n=maxn*mesh$size[1]);
+        maxn=365*100;
         mesh <- readmesh();
         d <- t(matrix(readBin(fn,what=numeric(),n=maxn*mesh$size[1]),nrow=ncol+1));
         t <- as.POSIXct(strptime(sapply(d[,1],t2time),'%Y-%m-%d %H:%M:%S','UTC') );
@@ -25,7 +26,6 @@ readpihmmf <- function(fn,binary,ncol){
         data <- d[,-1];
         ts <- xts(data,order.by=t);
     }
-        message(fn);
     return(ts);
 }
 readpihm20 <- function(fn){
@@ -39,43 +39,40 @@ readpihm20 <- function(fn){
 #==============================
 
 
-readout <-function(ext,binary=TRUE, ncol){
-
-
-    
-    nargin <- nargs()
-    if (nargin <1 ){
-        cat("\nUsage:\n\t data = readout(extension, binary=FALSE,ncols)\n");
-        cat("Where:\ndata = [T,data]\n");
-        cat("\tncols only required when binary=TRUE\n");
-        cat("\n\n");
-        return(0);
+readout <-function(ext,binary=TRUE, ncol,path){
+    if (missing(path)){
+        path <- outpath;
+    }else{
+        path <- path;
     }
-
     #cat("\t Reading file \n\t\t ",as.character(fn) ,"\n");
     if (pihmver > 2.3){
         if (binary){
-            fn=list.files(path=outpath,pattern=paste(projectname,'.',ext,'$',sep=''),full.names=TRUE);
+            fn=list.files(path=path,pattern=paste(projectname,'.',ext,'.dat$',sep=''),full.names=TRUE);
         }else{
-            fn=list.files(path=outpath,pattern=paste(projectname,'.',ext,'.txt$',sep=''),full.names=TRUE);
+            fn=list.files(path=path,pattern=paste(projectname,'.',ext,'.txt$',sep=''),full.names=TRUE);
         }
-        cat("\t Reading file \n\t\t ",as.character(fn) ,"\n");
-        if (length(fn)<=0){
-            stop('\n\t Error: File ',paste(projectname,'.',ext,'.txt',sep=''),' does not exist.\n\n')
-        }
-        if (file.exists(fn)){
-            if (grepl('^riv',ext)){
+        message("\t Reading file \n\t\t ",as.character(fn) ,"\n");
+        
+#        if (length(fn)<=0){
+#            stop('\n\t Error: File ',paste(projectname,'.',ext,'.txt',sep=''),' does not exist.\n\n')
+#        }
+        if (file.exists(fn)){          
+            if (grepl('^riv',ext) ){
                 riv <- readriv();
                 ncol <- riv$River$size;
-            }
+            }else{ 
+                mesh <- readmesh(); 
+                ncol <- mesh$size[1];
+            }            
             ts <- readpihmmf(fn,binary,ncol);
         }else{
-            stop('\n\t Error: File ',paste(projectname,'.',ext,'.txt',sep=''),' does not exist.\n\n')
+            stop('\n\t Error: File does not exist.\n',fn,'\n')
 #           cat('\n\t Error: File ',paste(projectname,'.',ext,'.txt',sep=''),' does not exist.\n\n');
         }
     }
     else{
-        fn=list.files(path=outpath,pattern=paste(projectname,'.',ext,'*',sep=''),full.names=TRUE);
+        fn=list.files(path=path,pattern=paste(projectname,'.',ext,'*',sep=''),full.names=TRUE);
         ts <- readpihm20(fn);
     }
 

@@ -41,6 +41,7 @@ PIHM.triplot<-function(data,terrain=FALSE, zratio=0,dist=0,shift=0){
     Hlen <- Hlim[2] - Hlim[1] + 1
     colorlut <- terrain.colors(Hlen,alpha=0) # height color lookup table
     col <- colorlut[ H-Hlim[1]+1 ] # assign colors to heights for each point
+    
     open3d()
     triangles3d(x,y,z,color=col)
     

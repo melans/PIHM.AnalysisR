@@ -13,20 +13,23 @@
 
 readatt <-function(fn){
   if (missing(fn)){
-        attfile <- file.path(inpath, paste(projectname,".att",sep=''));
+        theFile <- file.path(inpath, paste(projectname,".att",sep=''));
   }else{
-        attfile <- fn
+        theFile <- fn
   }
 
-if (!file.exists(attfile)){
-    stop ("\n\n\nAtt file \'", attfile , "\' is missing\n\n");
+if (!file.exists(theFile)){
+    stop ("\n\n\nAtt file \'", theFile , "\' is missing\n\n");
 }
+lines <- readLines(theFile);
+
 if (pihmver >2.3){
-    atthead=scan(attfile,what=character(),nlines=1,quiet = TRUE,blank.lines.skip = TRUE);
+    atthead=scan(text=lines[1],what=character(),nlines=1,quiet = TRUE,blank.lines.skip = TRUE);
 }else{
     atthead=c( "IND",  "SOIL", "GEOL", "LC",   "CMC",  "SNOWH","HSFC", "UNSAT","GW",  "METEO","LAI",  "SS",   "BC0",  "BC1",  "BC2",  "MACP")
 }
-matatt <-t( matrix (scan(attfile,what=integer(),skip=1,quiet = TRUE,blank.lines.skip = TRUE), nrow=16))
+lines<-lines[!is.na(lines)];
+matatt <- t(matrix(scan(text=lines[2:length(lines)],what=integer(),quiet = TRUE), nrow=16));
 colnames(matatt)=atthead;
 return(matatt);
 }

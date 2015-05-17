@@ -17,7 +17,7 @@ readUSGSgageLocal <- function (fn) {
 readUSGSQ <- function(siteid,sdate,edate){
    # siteid <- '01576754'
     loadinglib(c('EGRET','dataRetrieval'));
-    if(missing(bdate)){
+    if(missing(sdate)){
         sdate <- '1900-01-01';
     }
     if(missing(edate) ){
