@@ -12,26 +12,10 @@
 #' @export
 #' @examples
 #' PIHM()
-loadinglib <- function(liblist,quiet=TRUE){
-         
-  
-  for (i in 1:length(liblist)){
-      libname <- liblist[i];
-      if(require(libname,character.only=TRUE)){
-          if (!quiet){
-            message(libname," is loaded correctly.")
-          }
-      } else {
-          message("... \ttrying to install ",libname)
-          install.packages(libname, dep=TRUE,repos='http://cran.us.r-project.org')
-          if(require(libname)){
-              message(libname," installed and loaded.")
-          } else {
-              stop("Could not install ",libname)
-          }
-      }
-  }
-}
+
+#================================================
+#================================================
+#================================================
 PIHM.path <- function(indir, outdir,pname,minfodir,resdir,ver ){
     m=0;
     if (nargs() <1){
@@ -83,13 +67,14 @@ PIHM.path <- function(indir, outdir,pname,minfodir,resdir,ver ){
         assign("projectname",pname , envir = .GlobalEnv)
     }
     if (!missing (ver) ){
+
         assign("pihmver",ver , envir = .GlobalEnv)
     }
     if (!missing(minfodir)){ 
         assign("ModelInfopath",minfodir , envir = .GlobalEnv)
     }else{
         cat(inpath,'\n')
-        assign("ModelInfopath",file.path(inpath,'ModelInfo') , envir = .GlobalEnv) #Information of Input files.
+        assign("ModelInfopath",file.path(outpath,'ModelInfo') , envir = .GlobalEnv) #Information of Input files.
     }
     if (!missing(resdir)){ 
         assign("Resultpath",resdir , envir = .GlobalEnv)
@@ -106,6 +91,17 @@ PIHM.path <- function(indir, outdir,pname,minfodir,resdir,ver ){
     return(PIHMdir);
 }
 
+quickset <- function(pj){
+    fd=list.files('../../input',pattern=pj,full.names=TRUE);
+    if (length(fd)==1){
+        inpath=fd;
+    }
+    outpath='./'
+    projectname=pj;
+    
+    Sys.setenv(TZ = "UTC")
+    PIHM(indir=inpath,outdir=outpath,pname=projectname,ver=2.4)
+}
  
 PIHM <-function(indir, outdir,pname,ver){
     cat ("\n\n");
@@ -119,7 +115,10 @@ PIHM <-function(indir, outdir,pname,ver){
     cat ("\n\t    The Penn State Integrated Hydrologic Model");
     cat ("\n\t    Current version is PIHM-MF and PIHM v2.4");
     cat ("\n\n\n");
+    Sys.setenv(TZ = "UTC")
     
+    loadinglib();
+   .timefunc()
    if ( !exists('inpath') ) {
        if (missing(indir) && !exists('inapth')  ){
            indir <- readline(prompt="Path of input folder for PIHM(ENTER = current word directory):\n");
@@ -154,6 +153,7 @@ PIHM <-function(indir, outdir,pname,ver){
     }else{ pname=projectname;}
 
     if ( !exists('pihmver') ) {
+        ver=2.4
         if (missing(ver) ){
             ver <- readline(prompt="Version of your PIHM(2.0, or 2.4(PIHM-MF). Default=2.4)\n");
         }
@@ -175,28 +175,45 @@ PIHM <-function(indir, outdir,pname,ver){
      assign("MAX_THREADS",MAX_THREADS , envir = .GlobalEnv)
 
 
-  liblist=c('xts', #for time-series.
-            'geometry',# for ploting 3D.
-            'akima',
-            'hydroGOF',#good of fit for Hydrograph
-            'quantmod',
-            'Rcpp', #for time_t to time.
-            'EGRET','dataRetrieval' #for downloading USGS data
-            );
-  loadinglib(liblist,quiet=FALSE);
-
-
-
    PIHMdir <- PIHM.path(indir,outdir,pname,ver=ver)   
    PIHM.path();
 #    pihmin <- loadinput();
 #   assign("PIHMIN",pihmin , envir = .GlobalEnv)  
-
     cat ("\n\n");
     return(PIHMdir);
 }
 
-  
+PIHM.mode <- function(index, mode='analysis'){
+    str=c('calib',
+                    'init',
+                    'para',
+                    'mesh',
+                    'att',
+                    'lc')
+    switch=logical(length(str));
+
+    names(switch) <- str; 
+    if (grepl('^ana',mode)){
+        str='Analysis';
+        key=1
+        switch=!switch;     #all reading from bakup files.
+    }else if(grepl('^calib',mode)){
+        str='Calibration';
+        key=2
+    }else if(grepl('^prepare',mode)){
+        str='Prepare';
+        key=0
+    }else{
+        str='unknown';
+        key=-1
+    }
+    modelist<-list('key'=key,'mode'=str,'bak'=switch)
+    return(modelist)
+}
+
+
+.timefunc <- function(){
+  require('Rcpp') #for time_t to time.
     cppFunction('String  t2time( long int intime) {
         time_t rawtime;
         struct tm *utctime;
@@ -209,5 +226,5 @@ PIHM <-function(indir, outdir,pname,ver){
             );
         return result;
     }')
-
-
+    assign('t2time', t2time,envir = .GlobalEnv) 
+}

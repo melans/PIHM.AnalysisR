@@ -10,33 +10,54 @@
 #' @keywords check value
 #' @export  id of cell/segment which match filter.
 #' @examples
-#' datafilter(GW,filter=5) to find the cells which has value>5.
+#' datafilter(data,filter=5) to find the cells which has value>5.
 #'
-#' datafilter(GW,filter=-5) to find the cells which has value<5.
+#' datafilter(data,filter=-5) to find the cells which has value<5.
 #' 
-#' datafilter(GW,filter=[-5,5]) to find the cells which has -5<value<5.
+#' datafilter(data,filter=[-5,5]) to find the cells which has -5<value<5.
 #' 
 #' 
 #' 
 
 
-datafilter <-function(data, filter=5,ifplot=FALSE){
+datafilter <-function(data, filter=5,name='value',ylab='Value Name', unit='',is.riv=FALSE,if.plot=TRUE){
     dataMin=sapply(data,min);
     dataMax=sapply(data,max);
-    filterMin=min(filter);
-    filterMax=max(filter);
-    if (length(filter)>1)    {
-        ids=which(dataMin>filterMin & dataMax< filterMax) 
+    if(is.riv){
+        riv =readriv();
+        segshp=riv$River$riv[,7]
+        shp=riv$Shape$shp;
+        rd <- shp[segshp,2];
+        ids=which(dataMax>rd);
+    cat("\t",as.character(length(ids)), "item(s) are filtered from ",name," data.", "filter= Over Banks\n\n");
     }else{
-        if (filter >0){
-            ids=which(dataMax>filterMax);
+        filterMin=min(filter);
+        filterMax=max(filter);
+        if (length(filter)>1)    {
+            ids=which(dataMin>filterMin & dataMax< filterMax) 
         }else{
-            ids=which(dataMin<filterMin);
+            if (filter >0){
+                ids=which(dataMax>filterMax);
+            }else{
+                ids=which(dataMin<filterMin);
+            }
+        }
+    cat("\t",as.character(length(ids)), "item(s) are filtered from ",name," data.", 'filter=',filter,"\n\n");
+    }
+    
+    plotzoo(data,fn=paste(name,'_all.png',sep=''),ylab=ylab,unit=unit) ;
+    
+    if(length(ids)==0){
+        return(0)
+    }else{
+        if(if.plot){
+            plotzoo(data[,ids],fn=paste(name,filter,'.png',sep='') ,ylab=ylab,unit=unit);
+            if(is.riv){ # if ids is for rivers.
+                PIHM.triplot(rivid=ids,fn=paste(name,'_Overbank.png',sep=''),name=name,title=paste(name) );
+            }else{  # ids is for Cells.
+                PIHM.triplot(cellid=ids,fn=paste(name,'+ELV',filter,'.png',sep=''),name=name,title=paste(name,'filter=',filter) );
+            }
         }
     }
-    cat("\t",as.character(length(ids)), "item(s) are filtered\n\n");
-    if(ifplot & length(ids)>0){
-        plot.new();
-        matplot(data[,ids],type='l');
-    }
+    return(ids)
 }

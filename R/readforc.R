@@ -15,9 +15,18 @@
 
 
 readforc <-function(){
-    if (pihmver > 2.3){
-        forcing <- readforcmf();
+    theFile=list.files(inpath,pattern=paste(projectname,".RData",sep=""),full.names=TRUE);
+
+    if(length(theFile)>0){
+        forcing <- readRDS(file=theFile);
+        
     }else{
+        if (pihmver > 2.3){
+            forcing <- readforcmf();
+            
+        }else{
+            
+        }
     }
     
 
@@ -105,7 +114,13 @@ readforcmf <- function(){
     #rawForcing$data<-data;
     #rawForcing$NumMeteoTS <- NumMeteoTS;
     #rawForcing$Unit <- c("kg/m2/s","K","%","m/s","W/m2","W/m2","Pa");
+    assign('forc',rawForcing,envir = .GlobalEnv)
+    
+    rdsfile=file.path(inpath,paste(projectname,".RData",sep=""));
+    saveRDS(rawForcing,file=rdsfile,compress=TRUE);
+    
     return(rawForcing)
+    
 }
 
 

@@ -15,7 +15,7 @@ writeatt <-function(att,path=inpath){
 
 writecalib <- function(calib){
     theFile <- file.path(inpath, paste(projectname,".",'calib',sep=''));
-    bakFile <- file.path(inpath, paste(projectname,".",'calib.',as.character(Sys.time()),sep=''));
+    bakFile <- file.path(inpath, paste(projectname,".",'calib.',as.character(Sys.time()),'-',rnorm(1),sep=''));
     file.copy(theFile,bakFile)
     file.create(file=theFile);
     for (i in 1:length(calib$offon) ) {
@@ -28,4 +28,32 @@ writecalib <- function(calib){
             write(x=str,file=theFile,append =TRUE)
     }
 
+}
+
+writemesh <- function(mesh){
+    theFile <- file.path(inpath, paste(projectname,".",'mesh',sep=''));
+    bakFile <- file.path(inpath, paste(projectname,".",'mesh.',as.character(Sys.time()),'-',rnorm(1),sep=''));
+    file.copy(theFile,bakFile)
+    file.create(file=theFile);
+    str = c(as.character(mesh$size[1]),colnames(mesh$mesh)[-1]);
+    
+    write.table(x=str,file=theFile,append=FALSE,col.names=FALSE,row.names=FALSE,quote=FALSE,eol = "\t");  
+    write.table(x='',file=theFile,append=TRUE,col.names=FALSE,row.names=FALSE,quote=FALSE);  
+    write.table(x=mesh$mesh,file=theFile,append=TRUE,col.names=FALSE,row.names=FALSE,quote=FALSE);   
+    
+    str = c(as.character(mesh$size[2]),colnames(mesh$points)[-1]);
+    write.table(x=str,file=theFile,append=TRUE,col.names=FALSE,row.names=FALSE,quote=FALSE,eol = "\t");   
+    write.table(x='',file=theFile,append=TRUE,col.names=FALSE,row.names=FALSE,quote=FALSE);  
+    write.table(x=mesh$points,file=theFile,append=TRUE,col.names=FALSE,row.names=FALSE,quote=FALSE);   
+
+
+}
+
+writeinit <- function(init){
+     theFile <- file.path(inpath, paste(projectname,".",'init',sep=''));
+    bakFile <- file.path(inpath, paste(projectname,".",'init.',as.character(Sys.time()),'-',rnorm(1),sep=''));
+    file.copy(theFile,bakFile)
+    file.create(file=theFile);
+    write.table(x=init$minit,file=theFile,append=FALSE,col.names=FALSE,row.names=FALSE,quote=FALSE,eol = "\n");  
+    write.table(x=init$rinit,file=theFile,append=TRUE,col.names=FALSE,row.names=FALSE,quote=FALSE,eol = "\n");  
 }

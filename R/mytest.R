@@ -13,37 +13,23 @@
 #' PIHM()
  
 mytest<-function(data,terrain=FALSE, zratio=0){
-    library(rgl)
-    mesh <- readmesh();
+   mesh <- readmesh();
     riv <- readriv();
     msh <- mesh$mesh;
     pts <- mesh$points;
-    x=pts[msh[,2],2]+pts[msh[,3],2]+pts[msh[,4],2];
-    y=pts[msh[,2],3]+pts[msh[,3],3]+pts[msh[,4],3];
-    z=pts[msh[,2],4]+pts[msh[,3],4]+pts[msh[,4],4];
-    xlim <- range(x);
-    ylim <- range(y);
-    dx=(xlim[2]-xlim[1])/100;
-    dy=dx; #(ylim[2]-ylim[1])/100;
-    xc <- seq(xlim[1], xlim[2],by=dx);
-    yc <- seq(ylim[1], ylim[2],by=dy);
-    if (missing('data')){
-        mat <- interp(x,y,z,xo=xc,yo=yc);
-        H=mat$z;
-    }else{
-        mdata <-interp(x,y,data,xo=xc,yo=yc);
-        if (terrain){
-            mat <- interp(x,y,z,xo=xc,yo=yc);
-            H <- mat$z + mdata$z;   # Terrain + spatial data
-        }else{
-            H <- mdata$z;
-        }
-    }
-    
-    Hlim <- round(range(H[!is.na(H)]))
+    tri <- msh[,2:4];
+    m <- nrow(tri);
+    x=t(matrix(c(pts[tri[,1],2],pts[tri[,2],2],pts[tri[,3],2]),m,3) );
+    y=t(matrix(c(pts[tri[,1],3],pts[tri[,2],3],pts[tri[,3],3]),m,3) );
+    z=t(matrix(c(pts[tri[,1],4],pts[tri[,2],4],pts[tri[,3],4]),m,3) );
+    H=t(matrix( (pts[msh[,2],4]+pts[msh[,3],4]+pts[msh[,4],4] )/3, m,3))
+   Hlim <- range(H)
+    xlim<- range(x);
+    ylim<-range(y)
     dhdx <- diff(Hlim) / min(diff(xlim),diff(ylim));
-    if (dhdx < 1/10 ) {
-        zr <-  round(1/10/dhdx) ;
+    zr <- 1;
+    if (dhdx < 1/2000 ) {
+        zr <-  round(1/2000/dhdx) ;
         warning('\n\tdh/dx = ',round(dhdx,digits=5),'.\tZ ratio > ', zr, ' is recommended');
         if (zratio <= 0){
             zr <- zr;
@@ -51,16 +37,80 @@ mytest<-function(data,terrain=FALSE, zratio=0){
             zr <- zratio;
         }
     }
-
-    H <- H*zr;
-    Hlim <- round(range(H[!is.na(H)]))
+    z=z*zr;
+    Hlim <- range(H)
     Hlen <- Hlim[2] - Hlim[1] + 1
-    colorlut <- terrain.colors(Hlen,alpha=0) # height color lookup table
+    colorlut <- terrain.colors(Hlen,alpha=1) # height color lookup table
     col <- colorlut[ H-Hlim[1]+1 ] # assign colors to heights for each point
+    
 
-    open3d()
+    
+   # open3d()
+    rgl.open();
+    triangles3d(x,y,z,color=col,box=TRUE)
+    legend3d("topright", legend = paste(1:90), pch = 1:90, col = colorlut, cex=1)
+    
+}
 
-    rgl.surface(xc, yc, H, color=col, alpha=0.75, back="lines")
 
 
+newtest <-function(){
+    x=1:100*1000;
+    y=1:100*1000;
+    z=matrix(sort(abs(rnorm(100*100,500,300) )),100,100)/1e4
+    cat(range(z))
+    H <- z
+    Hlim <- round(range(H[!is.na(H)]))
+    if(diff(Hlim)<1 ) {    
+        Hlim <- round(100*range(H[!is.na(H)]))
     }
+
+    Hlen <- Hlim[2] - Hlim[1] + 1
+    colorlut <- terrain.colors(Hlen,alpha=1) # height color lookup table
+    colorlut <- terrain.colors(Hlen) # height color lookup table
+
+    col <- colorlut[ H-Hlim[1]+1 ] # assign colors to heights for each point
+       
+   surface3d(x,y,z,color=col);
+   aspect3d(x=1,y=1,z=.5)
+   axis3d('x',labels=T);
+   axis3d('y',labels=TRUE);
+   axis3d('Z',lables=T);
+     bgplot3d( suppressWarnings ( image.plot( legend.only=TRUE,  zlim=Hlim/100,col=colorlut) ) )#legend
+
+   
+    #bgplot3d(   image.plot( legend.only=TRUE, legend.args=list(text='Value'), zlim=Hlim,col=colorlut) ) 
+   
+   #persp3d(x,y,z,color=col,nomal_z=10);
+   
+
+}
+testhydrograph <- function(P,Q){
+    if(!exists('forc')){
+        forc<-readforc();
+    }
+    prcp=forc$PRCP$ts1
+    time(prcp)=round(time(prcp),units='days');
+    pdaily=apply.daily(prcp,FUN=mean);
+
+    q=readout(ext='rivFlx1',binary=TRUE);
+    riv <-readriv(bak=TRUE)
+    outlets <- riv$River$outlets
+    Q <- q[,outlets];
+
+    t=time(Q);
+    P=pdaily[t];
+
+
+    twoord.plot(t,Q,t,P,lylim=range(Q),rylim=range(P),lcol='blue',rcol='yellow',type=c('l','bar'))
+
+
+
+    df.bar <- barplot(P,col='blue',ylim=rev(range(P)),axes=FALSE,yaxt='n');
+    axis(side=4)
+    lines(x=df.bar, y=Q,ylim=range(Q));
+    
+
+
+}
+

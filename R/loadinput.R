@@ -33,8 +33,42 @@ return(pihmin)
 
 #============ #============
 #============ #============
-readpara <- function(){
-    theFile <- file.path(inpath, paste(projectname,".",'para',sep=''));
+
+readatt <-function(bak=FALSE){
+    if (bak){
+        theFile <- list.files(path=outpath, pattern=paste(projectname,".",'att.bak',sep=''),full.names=TRUE);
+        if (length(theFile)<=0){
+            warning('The att file in input folder was read, instead of in output folder.\n');
+            theFile <- list.files(path=inpath, pattern=paste(projectname,".",'att$',sep=''),full.names=TRUE);
+        }        
+            
+    }else{
+        theFile <- list.files(path=inpath, pattern=paste(projectname,".",'att$',sep=''),full.names=TRUE);
+    }
+
+    if (length(theFile)<=0){
+        stop ("\n\n\n file \'", theFile , "\' is missing\n\n");
+    }
+lines <- readLines(theFile);
+
+if (pihmver >2.3){
+    atthead=scan(text=lines[1],what=character(),nlines=1,quiet = TRUE,blank.lines.skip = TRUE);
+}else{
+    atthead=c( "IND",  "SOIL", "GEOL", "LC",   "CMC",  "SNOWH","HSFC", "UNSAT","GW",  "METEO","LAI",  "SS",   "BC0",  "BC1",  "BC2",  "MACP")
+}
+lines<-lines[!is.na(lines)];
+matatt <- t(matrix(scan(text=lines[2:length(lines)],what=integer(),quiet = TRUE,blank.lines.skip = TRUE), nrow=16));
+colnames(matatt)=toupper(atthead);
+return(matatt);
+}
+#============ #============
+#============ #============
+readpara <- function(bak=FALSE){
+    if (bak){
+        theFile <- list.files(path=outpath, pattern=paste(projectname,".",'para.bak',sep=''),full.names=TRUE);
+    }else{
+        theFile <- list.files(path=inpath, pattern=paste(projectname,".",'para',sep=''),full.names=TRUE);
+    }
 
 if (!file.exists(theFile)){
     stop ("\n\n\n file \'", theFile , "\' is missing\n\n");
@@ -72,7 +106,7 @@ if (pihmver >2.3){
             }
         }
     }
-    names(para) <- namelist;
+    names(para) <- toupper(namelist);
     offon <- logical(length(namelist));
     for (i in 1:length(namelist)){
         if (grepl("^#",namelist[i])) {# if line start with '#', means off;
@@ -91,12 +125,29 @@ else{
 }
 #============ #============
 #============ #============
-readcalib <- function(){
-    theFile <- file.path(inpath, paste(projectname,".",'calib',sep=''));
-
-if (!file.exists(theFile)){
-    stop ("\n\n\n .calib file \'", theFile , "\' is missing\n\n");
-}
+readcalib <- function(bak=FALSE){
+    if (bak){
+        theFile <- list.files(path=outpath, pattern=paste(projectname,".",'calib.bak$',sep=''),full.names=TRUE);
+        if (length(theFile)<=0){
+            cat('\n.calib file does not exist. Read the .calib in input folder instead? (YES/no)\n\n');
+            line=readline()
+            if ( grepl('^n', tolower(line)) ){
+                stop(' Abort. \n');
+            }else{
+                warning('The calib file in input folder was read, instead of in output folder.\n');
+                theFile <- list.files(path=inpath, pattern=paste(projectname,".",'calib$',sep=''),full.names=TRUE);
+            }
+        }
+    }else{
+        theFile <- list.files(path=inpath, pattern=paste(projectname,".",'calib$',sep=''),full.names=TRUE);
+    }
+    
+    if (length(theFile)<=0){      
+        stop ("\n\n\n .calib file \'", theFile , "\' is missing\n\n");
+    }
+    if (length(theFile)>1){
+        stop ("\n\n\n Two .calib files", theFile );
+    }
 
 namelist <- character()
 comments <- character();
@@ -127,7 +178,7 @@ if (pihmver >2.3){
         }
     }
 
-    names(value) <- namelist;
+    names(value) <- toupper(namelist);
 
 
 #    for (i in 1:length(namelist)){
@@ -162,8 +213,14 @@ else{
 
 #============ #============
 #============ #============
-readinit <- function(ncell,nriv){
+readinit <- function(bak=FALSE,update=FALSE){
      theFile <- file.path(inpath, paste(projectname,".",'init',sep=''));
+    if(bak){
+        theFile <- file.path(outpath, paste(projectname,".",'init.bak',sep=''));
+    }
+    if(update){
+        theFile <- file.path(outpath, paste(projectname,".",'init.update',sep=''));
+    }
 
 if (!file.exists(theFile)){
     stop ("\n\n\n . init file \'", theFile , "\' is missing\n\n");
@@ -179,14 +236,14 @@ if (!file.exists(theFile)){
 #    minit<-do.call(rbind,a[lid])    # both lines work.
     minit <- t(matrix(unlist(a[lid]),nrow=length(mhead)) ); #,nrow=length(lid))
     rinit <- t(matrix(unlist(a[-lid]),nrow=length(rhead)) ); #nrow=length(a)-length(lid))    
-    colnames(minit)= mhead
-    colnames(rinit)= rhead;
+    colnames(minit)= toupper(mhead)
+    colnames(rinit)= toupper(rhead);
 
     return(list('minit'=minit,'rinit'=rinit));
 }
 #============ #============
 #============ #============
-readibc <- function(){
+readibc <- function(bak=FALSE){
     return(ibc);
 }
 #============ #============
@@ -195,8 +252,16 @@ readibc <- function(){
 
 #============ #============
 #============ #============
-readinTable <- function(ext, ncol, head){  #Basic function for read table for PIHM input. Applied for soil/geol//lc
-theFile <- file.path(inpath, paste(projectname,".",ext,sep=''));
+readinTable <- function(ext, ncol, head,bak=FALSE){  #Basic function for read table for PIHM input. Applied for soil/geol//lc
+        if (bak){
+        theFile <- list.files(path=outpath, pattern=paste(projectname,".",ext,'.bak',sep=''),full.names=TRUE);
+    }else{
+        theFile <- list.files(path=inpath, pattern=paste(projectname,".",ext,sep=''),full.names=TRUE);
+    }
+
+    if (!file.exists(theFile)){
+        stop ("\n\n\n file \'", theFile , "\' is missing\n\n");
+    }
 
 if (!file.exists(theFile)){
     stop ("\n\n\n file \'", theFile , "\' is missing\n\n");
@@ -209,32 +274,51 @@ if (pihmver >2.3){
 }
 
 mat <-t( matrix (scan(theFile,what=numeric(),skip=1,blank.lines.skip = TRUE,quiet = TRUE), nrow=ncol))
-colnames(mat)=head;
+colnames(mat)=toupper(head);
 return(mat);
 }
 
 #============ #============
 #============ #============
-readsoil <-function(){
+readsoil <-function(bak=FALSE){
     
-    head=c( "IND","INFK","MAXSMC","MINSMC","DINF","ALPHA","BETA","MACHF","SATMACHK","QTZ")
-    mat <- readinTable('soil',length(head),head);
+    head=c( "IND","INFK","MAXSMC","MINSMC","DINF","ALPHA","BETA","MACHF","SATMACVK","QTZ")
+    mat <- readinTable('soil',length(head),head,bak=bak);
 return(mat);
 }
 
 #============ #============
 #============ #============
-readgeol <-function(){
-    head=c( "IND","SATHK","SATDK","MAXSMC","MINSMC","ALPHA","BETA","MACVF","SATMACKH","DMAC")
-    mat <- readinTable('geol',length(head),head);
+readgeol <-function(bak=FALSE){
+    head=c( "IND","SATHK","SATVK","MAXSMC","MINSMC","ALPHA","BETA","MACVF","SATMACKH","DMAC")
+    mat <- readinTable('geol',length(head),head,bak=bak);
 return(mat);
 }
 
 #============ #============
 #============ #============
-readlc <-function(fn){
+readlc <-function(bak=TRUE){
+    if (bak){
+        theFile <- list.files(path=outpath, pattern=paste(projectname,".",'lc','.bak',sep=''),full.names=TRUE);
+    }else{
+        theFile <- list.files(path=inpath, pattern=paste(projectname,".",'lc$',sep=''),full.names=TRUE);
+    }
+
+    if (!file.exists(theFile)){
+        stop ("\n\n\n file \'", theFile , "\' is missing\n\n");
+    }
+
+    tmp=read.table(theFile);
+    lc=as.matrix(tmp);
+    if(lc[1,1]==0){
+        lc=lc[-1,]
+    }
+    #head=c();
+    return(lc);
 }
 
+#============ #============
+#============ #============
 projectInfo <- function (print=FALSE){
     if (missing('PIHMIN')){
         PIHMIN <- loadinput();
@@ -243,7 +327,275 @@ projectInfo <- function (print=FALSE){
     else{
         message('\ninpath =', inpath);
         message('\nprojectname = ', projectname);
+    }
+    Kcalib(calib.bak=TRUE);
+    
+}
+
+#============ #============
+#============ #============
+showmeKs <- function( calib.bak=FALSE,quiet=FALSE){
+    soil<-readsoil();
+    geol<-readgeol();
+    calib<-readcalib(bak=calib.bak);
+    ns=nrow(soil);
+    ng=nrow(geol);
+    if(ns>1 & ng>1){
+        id= which(grepl('infk|satmac',tolower(colnames(soil))) )
+        Ksoil<-soil[,id]
+        if(ns>1){
+            Ksoil<-rbind(Ksoil,colMeans(Ksoil));
+            row.names(Ksoil) <- c(paste(1:ns),'mean');
+        }
+
+        geolcols= which(grepl('^sat|^satmac',tolower(colnames(geol))) )
+
+        Kgeol<-geol[,geolcols];
+        if(ng>1){
+            Kgeol<-rbind(Kgeol,colMeans(Kgeol));
+            row.names(Kgeol) <- c(paste(1:ng),'mean');
+        }
+
+        cKsoil<-Ksoil;
+        cKgeol<-Kgeol;
         
+        cKsoil[,'INFK'] = cKsoil[,'INFK']*calib$value['KINF'];
+        
+        id=2
+        cKsoil[,id] = cKsoil[,id]*calib$value['KMACSATV'];
+
+        id=1 #which(grepl('^sathk',tolower(colnames(geol))) )
+        cKgeol[,id] = cKgeol[,id]*calib$value['KSATH'];
+
+        id=2 #which(grepl('^satvk|^satdk',tolower(colnames(geol))) )
+        cKgeol[,id] = cKgeol[,id]*calib$value['KSATV'];
+        id=3 #which(grepl('^satmac',tolower(colnames(geol))) );
+        cKgeol[,id] = cKgeol[,id]*calib$value['KMACSATH'];
+
+        riv=readriv(bak=TRUE);
+        nr=nrow(riv$Material$mat);
+        Krivm=riv$Material$mat[,4:5];
+        
+        id=which(grepl('^krivh',tolower(names(calib$value))) )
+        Krivm=cbind(Krivm,Krivm[,1]*calib$value[id]);
+        id=which(grepl('^krivv',tolower(names(calib$value))) )
+        Krivm=cbind(Krivm,Krivm[,2]*calib$value[id]);
+        colnames(Krivm)=c(colnames(Krivm[,1:2]), paste('C_',colnames(Krivm[,1:2]),sep=''));
+        if(nrow(Krivm)>1){
+            Krivm=rbind(Krivm,colMeans(Krivm));
+            row.names(Krivm)=c(paste(1:nr),'mean');
+        }
+        
+        if( !quiet){ 
+            cat('\nK in soil/geol with calib, (m/s)\n');
+            print(last(Ksoil))
+            print(last(Kgeol))
+            cat('\nK in soil/geol with calib, (m/s)\n');
+            print(last(cKsoil))
+            print(last(cKgeol))
+            cat('\nK in riv, (m/s)\n');
+            print(Krivm);
+        #    print("K in soil\t=\t", last(Ksoil),' m/s\n');
+        #    print("K in geol\t=\t", last(Kgeol),' m/s\n');
+        #    print("K in calib+soil\t=\t", last(cKsoil),' m/s\n');
+        #    print("K in calib+cKgeol\t=\t", last(cKgeol),' m/s\n');
+
+        }
+
+        if (calib.bak){
+            theFile <- file.path(Resultpath, paste(projectname,".",'K_SoilGeolRiv.txt',sep=''));
+            write('K in soil/Geol (m/s)\n\n',theFile, append=FALSE);
+            write.table(Ksoil[nrow(Ksoil) ,],quote=FALSE,theFile,append=TRUE,row.names=TRUE,col.names=TRUE,eol = "\n");
+            write.table(Kgeol[nrow(Kgeol),],quote=FALSE,theFile,append=TRUE,row.names=TRUE,col.names=TRUE,eol = "\n");
+            write.table(cKsoil[nrow(cKsoil),],quote=FALSE,theFile,append=TRUE,row.names=TRUE,col.names=TRUE,eol = "\n");
+            write.table(cKgeol[nrow(cKgeol),],quote=FALSE,theFile,append=TRUE,row.names=TRUE,col.names=TRUE,eol = "\n");
+            write.table(Krivm,theFile,append=TRUE,row.names=TRUE,col.names=TRUE,,quote=FALSE,eol = "\n");
+
+    #         lapply(Ksoil, write.table, theFile, append=TRUE)
+    #         lapply(Kgeol, write.table, theFile, append=TRUE)
+    #         lapply(cKsoil, write.table, theFile, append=TRUE)
+    #         lapply(cKgeol, write.table, theFile, append=TRUE)
+        }
+    }else{
+        Ksoil=soil[,c(2,9)];
+        Kgeol=geol[,c(2,3,9)];
+        cKsoil=Ksoil;
+        cKgeol=Kgeol;
+        cKsoil['INFK'] = cKsoil['INFK']*calib$value['KINF'];
+        id=2
+        cKsoil[id] = cKsoil[id]*calib$value['KMACSATV'];
+
+        id=1 #which(grepl('^sathk',tolower(colnames(geol))) )
+        cKgeol[id] = cKgeol[id]*calib$value['KSATH'];
+
+        id=2 #which(grepl('^satvk|^satdk',tolower(colnames(geol))) )
+        cKgeol[id] = cKgeol[id]*calib$value['KSATV'];
+        id=3 #which(grepl('^satmac',tolower(colnames(geol))) );
+        cKgeol[id] = cKgeol[id]*calib$value['KMACSATH'];
+         
+        if( !quiet){ 
+            cat('\nK in soil/geol with calib, (m/s)\n');
+            print(Ksoil)
+            print(Kgeol)
+            cat('\nK in soil/geol with calib, (m/s)\n');
+            print(cKsoil)
+            print(cKgeol)
+            cat('\nK in riv, (m/s)\n');
+            print(Krivm);
+        #    print("K in soil\t=\t", last(Ksoil),' m/s\n');
+        #    print("K in geol\t=\t", last(Kgeol),' m/s\n');
+        #    print("K in calib+soil\t=\t", last(cKsoil),' m/s\n');
+        #    print("K in calib+cKgeol\t=\t", last(cKgeol),' m/s\n');
+
+        }
+
+        if (calib.bak){
+            theFile <- file.path(Resultpath, paste(projectname,".",'K_SoilGeolRiv.txt',sep=''));
+            write('K in soil/Geol (m/s)\n\n',theFile, append=FALSE);
+            write.table(Ksoil,quote=FALSE,theFile,append=TRUE,row.names=TRUE,col.names=TRUE,eol = "\n");
+            write.table(Kgeol,quote=FALSE,theFile,append=TRUE,row.names=TRUE,col.names=TRUE,eol = "\n");
+            write.table(cKsoil,quote=FALSE,theFile,append=TRUE,row.names=TRUE,col.names=TRUE,eol = "\n");
+            write.table(cKgeol,quote=FALSE,theFile,append=TRUE,row.names=TRUE,col.names=TRUE,eol = "\n");
+            write.table(Krivm,theFile,append=TRUE,row.names=TRUE,col.names=TRUE,,quote=FALSE,eol = "\n");
+
+    #         lapply(Ksoil, write.table, theFile, append=TRUE)
+    #         lapply(Kgeol, write.table, theFile, append=TRUE)
+    #         lapply(cKsoil, write.table, theFile, append=TRUE)
+    #         lapply(cKgeol, write.table, theFile, append=TRUE)
+        }
 
     }
+    Ks<-list('Ksoil'=Ksoil,'Kgeol'= Kgeol,'cKsoil'=cKsoil,'cKgeol'=cKgeol,'Krivm'=Krivm, 'Unit'='m/s');
+
+
+    return(Ks);
+}
+#======                      ================================
+#======  ====   =   =  =   =  ===============================
+#======  =      =   =  ==  =  ===============================
+#======  ====   =   =  = = =  ===============================
+#======  =      =   =  =  ==  ===============================
+#======  =       ===   =   =  ===============================
+#======                      ================================
+Kcalib <-function(calib.bak=TRUE,quiet=FALSE){
+
+K<-showmeKs(TRUE,calib.bak=calib.bak); 
+
+Kd <- lapply(K[!(names(K) %in% c('Unit'))],function(x) x*86400)
+if (calib.bak){
+    theFile <- file.path(Resultpath, paste(projectname,".",'K_SoilGeolRiv.txt',sep=''));
+    write('\n\nK in soil/Geol (m/day)\n\n',theFile, append=TRUE);
+    for(i in 1:4 ){
+        write.table(last(Kd[[i]]),theFile,append=TRUE,row.names=TRUE,col.names=TRUE,,quote=FALSE,eol = "\n");
+    }
+    write.table(Kd[[5]],theFile,append=TRUE,row.names=TRUE,col.names=TRUE,,quote=FALSE,eol = "\n");
+
+}
+Kd <- c(Kd,'Unit'='m/day');
+
+if(!quiet){
+    cat('\n\nK in soil/geol without calib, (m/day)\n');
+    for (i in 1:2){
+        print(  last(Kd[[i]])    );
+    }
+    cat('\nK in soil/geol with calib, (m/day)\n');
+    for (i in 3:4){
+        print(  last(Kd[[i]])    );
+    }
+    cat('\nK in riv , (m/day)\n');
+    print(  Kd[[5]]    );
+    showcalib()
+   # print(names(Kd));
+}
+
+
+return(Kd);
+
+}
+
+#============ #============
+#============ #============
+showcalib <- function(bak=TRUE){
+    calib=readcalib(bak=bak)
+    print(calib$value)
+}
+
+
+#============ #============
+#============ #============
+readmesh <-function(bak=FALSE){
+    if(!bak){
+        meshfile <- file.path(inpath, paste(projectname,".mesh",sep=''));
+    }else{
+        meshfile <- file.path(outpath, paste(projectname,".mesh.bak",sep=''));
+        if(!file.exists(meshfile)){
+            warning('No .mesh file exists in ',outpath,'\n');
+            meshfile <- file.path(inpath, paste(projectname,".mesh",sep=''));
+            #stop('No .mesh exists in folder ', outpath ,'\n');
+        }
+    }
+    if (pihmver >=2.4 ){
+        ncell=scan(meshfile,what=integer(),nmax=1,blank.lines.skip = TRUE,quiet = TRUE);
+        mshhead=scan(meshfile,what=character(),nlines=1,blank.lines.skip = TRUE,quiet = TRUE);
+
+        msh <-t( matrix (scan(meshfile,what=integer(),skip=1,nlines=ncell,blank.lines.skip = TRUE,quiet = TRUE), ncol=ncell))
+
+        npt=scan(meshfile,what=integer(),nmax=1,skip=ncell+1,blank.lines.skip = TRUE,quiet = TRUE);
+        pthead=scan(meshfile,what=character(),nlines=1,skip=ncell+1,blank.lines.skip = TRUE,quiet = TRUE);
+        pt <-t( matrix (scan(meshfile,what=double(),skip=ncell+2,nlines=ncell,blank.lines.skip = TRUE,quiet = TRUE), ncol=npt))
+
+        colnames(msh)= c("ID",mshhead[-1]) 
+        colnames(pt)=c("ID",pthead[-1]);
+    }
+    else{
+        num=scan(meshfile,what=integer(),nmax=2,blank.lines.skip = TRUE,quiet = TRUE);
+        ncell=num[1];
+        npt=num[2];
+        msh <-t( matrix (scan(meshfile,what=integer(),skip=1,nlines=ncell,blank.lines.skip = TRUE,quiet = TRUE), ncol=ncell))
+        pt <-t( matrix (scan(meshfile,what=double(),skip=ncell+1,nlines=ncell,blank.lines.skip = TRUE,quiet = TRUE), ncol=npt))
+
+        colnames(msh) <- c("ID","NODE1","NODE2","NODE3","NABR1","NABR2","NABR3")
+        colnames(pt) <- c("ID", "X","Y","ZMIN","ZMAX");
+
+    }
+    mesh <-list("size"=c(ncell,npt),"mesh"=msh, "points"=pt );
+    return(mesh);
+}
+
+#============ #============
+#============ #============
+readarea <-function(bak=FALSE){
+    mesh <- readmesh(bak=bak);
+    msh <- mesh$mesh;
+    pts <- mesh$points;
+    tri <- msh[,2:4];
+    m <- nrow(tri);
+    x=t(matrix(c(pts[tri[,1],2],pts[tri[,2],2],pts[tri[,3],2],pts[tri[,1],2]),m,4) );
+    y=t(matrix(c(pts[tri[,1],3],pts[tri[,2],3],pts[tri[,3],3],pts[tri[,1],3]),m,4) );
+    z=t(matrix(c(pts[tri[,1],4],pts[tri[,2],4],pts[tri[,3],4],pts[tri[,1],4]),m,4) );
+  iarea <- polyarea(x,y); 
+  return(iarea);
+  
+}
+
+
+#============ #============
+#============ #============
+
+getporosity <- function(bak=TRUE,if.calib=TRUE){
+    
+    att=readatt(bak=bak);
+    soilid=att[,2];
+    geolid=att[,3];
+    
+    soil=readsoil();
+    geol=readgeol();
+    
+    sp=soil[soilid,3];
+    gp=geol[geolid,4];
+
+    poro=matrix(c(sp,gp),nrow=2);
+    rownames(poro)=c('Soil_Poro','Geol_Poro');
+
+    return(poro);
 }

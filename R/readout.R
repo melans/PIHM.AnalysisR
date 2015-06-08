@@ -17,7 +17,8 @@ readpihmmf <- function(fn,binary,ncol){
         #x=readBin(fn,what=numeric(),n=maxn*mesh$size[1]);
         maxn=365*100;
         mesh <- readmesh();
-        d <- t(matrix(readBin(fn,what=numeric(),n=maxn*mesh$size[1]),nrow=ncol+1));
+        d <- t(matrix(readBin(fn,what=double(),n=maxn*mesh$size[1]),nrow=ncol+1));
+        
         t <- as.POSIXct(strptime(sapply(d[,1],t2time),'%Y-%m-%d %H:%M:%S','UTC') );
         ts <- xts(d[,-1],order.by=t);
     }else{
@@ -57,7 +58,8 @@ readout <-function(ext,binary=TRUE, ncol,path){
 #        if (length(fn)<=0){
 #            stop('\n\t Error: File ',paste(projectname,'.',ext,'.txt',sep=''),' does not exist.\n\n')
 #        }
-        if (file.exists(fn)){          
+        if (file.exists(fn)){    
+            if(missing(ncol)){
             if (grepl('^riv',ext) ){
                 riv <- readriv();
                 ncol <- riv$River$size;
@@ -65,6 +67,7 @@ readout <-function(ext,binary=TRUE, ncol,path){
                 mesh <- readmesh(); 
                 ncol <- mesh$size[1];
             }            
+            }
             ts <- readpihmmf(fn,binary,ncol);
         }else{
             stop('\n\t Error: File does not exist.\n',fn,'\n')

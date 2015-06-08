@@ -15,20 +15,33 @@
 #' @examples
 #' loadoutputQ(outpath,projectname,inpath)
 
-loadoutput <-function(){
+loadoutput <-function(extlist){
 #   nargin <- nargs();
 #    if (nargin <1){
 #        cat("\nUsage:\n\t PIHMout <- loadoutput(outpath=\"./\",projectname)\n");
 #        cat("\n\n");
 #        return(0);
 #    }
-    if (pihmver >2.3){
-        flist <- list.files(path=outpath,pattern=paste(projectname,".*.dat$",sep='') );
-        fpath <- list.files(path=outpath,pattern=paste(projectname,".*.dat$",sep=''), full.names = TRUE );
-    }else{
-        flist <- list.files(path=outpath,pattern=paste(projectname,".*.dat$",sep='') );
-        fpath <- list.files(path=outpath,pattern=paste(projectname,".*.dat$",sep=''), full.names = TRUE );
-
+    if(!missing(extlist)){
+        exts<-paste(projectname,'.',extlist,'.dat$',sep='')
+        pattern=paste(exts,collapse='|')
+        if (pihmver >2.3){
+            flist <- list.files(path=outpath,ignore.case = TRUE,pattern=pattern);
+            fpath <- list.files(path=outpath,ignore.case = TRUE,pattern=pattern, full.names = TRUE );
+        }else{
+            flist <- list.files(path=outpath,ignore.case = TRUE,pattern=pattern );
+            fpath <- list.files(path=outpath,ignore.case = TRUE,pattern=pattern, full.names = TRUE );
+        }
+    }
+    else{
+        pattern=paste(projectname,'.*.dat$',sep='')
+         if (pihmver >2.3){
+            flist <- list.files(path=outpath,ignore.case = TRUE,pattern=pattern);
+            fpath <- list.files(path=outpath,ignore.case = TRUE,pattern=pattern, full.names = TRUE );
+        }else{
+            flist <- list.files(path=outpath,ignore.case = TRUE,pattern=pattern );
+            fpath <- list.files(path=outpath,ignore.case = TRUE,pattern=pattern, full.names = TRUE );
+        } 
     }
     dataname <- substring(flist,nchar(projectname) + 2,nchar(flist) - 4)
     
@@ -36,8 +49,8 @@ loadoutput <-function(){
     #out <- list("names"=dataname);  #Names of data;
     length(out) <- length(dataname);
     names(out) <- dataname;
-    mesh <- readmesh();
-    riv <- readriv(); 
+    mesh <- readmesh(bak=TRUE);
+    riv <- readriv(bak=TRUE); 
     for( i in 1:length(fpath)){
         if (file.info(fpath[i])$size >0){
             message(fpath[i]);
@@ -46,6 +59,7 @@ loadoutput <-function(){
                 nc <- riv$River$size 
             }
             d <- readout( dataname[i],binary=TRUE,nc)
+            t<-time(d)[nrow(d)];            
             n=mesh$size[[1]];
             out[[i]]=d;
             m=nrow(d);
@@ -57,6 +71,9 @@ loadoutput <-function(){
             cat('File is empty. ', flist[i],'\n');
         }
     }
+    out=c(out,list('CommonTime'=time(out[[1]]))); 
+    assign('PIHMOUT', out,envir=.GlobalEnv);
+
        return(out)
 }
 
