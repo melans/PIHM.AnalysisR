@@ -16,11 +16,12 @@
 #' Q <- goQ(inpath="./", outpath="./", resultpath="./AnalysisResults/",ifplot=1, projectname=0,outlets=0)
 
 
-goQ <-function(outlets,if.plot=TRUE,if.update=TRUE,ifP=FALSE){
+goQ <-function(outlets,if.plot=TRUE,if.update=TRUE,ifP=FALSE, Q.number=1){
+        ext=paste('rivFlx',Q.number,sep='');
     if (exists('PIHMOUT')  & !if.update){
-        q=PIHMOUT$rivFlx1
+        q=PIHMOUT[[ext]];
     }else{
-        q=readout(ext='rivFlx1',binary=TRUE);
+            q=readout(ext=ext,binary=TRUE);
     }
     if ( missing(outlets) ){
         riv <-readriv(bak=TRUE)
@@ -28,23 +29,33 @@ goQ <-function(outlets,if.plot=TRUE,if.update=TRUE,ifP=FALSE){
     }
 
     Q <- q[,outlets];
-        print("Load Q successfully");
+    
+    message("Load Q successfully, outlets=",outlets);
     t=time(Q);
     nq=length(outlets);
     yr=year(Q);
     period=diff(range(yr));
+    fnhead=paste('Discharge',Q.number,sep='');
+
     if (if.plot){
         if (!file.exists(Resultpath)){  #make the result folder
             dir.create(Resultpath)
         } 
-        if(ifP){    #if draw PRCP on plot.
-            if(!exists('forc')){
-                forc<-readforc();
-            }
-            P=forc$PRCP$ts1 * 86400;
-            time(P)=round(time(P),units='days');
-            pdaily=apply.daily(P,FUN=mean);
-            
+        if(ifP & nq==1){    #if draw PRCP on plot.
+#            P= readprcp() * 86400 #forc$PRCP$ts1 * 86400;
+#            time(P)=round(time(P),units='days');
+#            pdaily=apply.daily(P,FUN=mean);
+#            prcp=readprcp();
+#
+#            P= readprcp() * 86400;
+#            time(P)=round(time(P),units='days');
+#            ipd=apply.daily(P,FUN=mean);  
+#            att=readatt(bak=TRUE);
+#            mid <- att[,which(grepl('^meteo',tolower(colnames(att))))];
+            calib=readcalib(bak=TRUE);
+#            pdaily=rowSums(matRowMulti(ipd[,mid],iarea))/area * calib$value['PRCP'];
+        pdaily=dailyprcp() *  calib$value['PRCP'];
+
             iarea=readarea();
             qq=Q/sum(iarea);
      #   mat=data.frame(t,as.numeric(pdaily[t]),as.numeric(Q))
@@ -52,17 +63,16 @@ goQ <-function(outlets,if.plot=TRUE,if.update=TRUE,ifP=FALSE){
             
           #  hydrograph(mat)
             
-            pihm.hydrograph(Q,pdaily,fn='Discharge_HydroGraph_CMS.png',P.unit='mm/day',S.unit='m^3/s');
-            pihm.hydrograph(qq*86400,pdaily,fn='Discharge_HydroGraph_H.png',P.unit='mm/day',S.unit='m/day');
+            pihm.hydrograph(Q,pdaily,fn=paste(fnhead, '_HydroGraph_CMS.png',sep='') ,P.unit='mm/day',S.unit='m^3/s');
+            pihm.hydrograph(qq*86400,pdaily,fn=paste(fnhead, '_HydroGraph_H.png',sep='') ,P.unit='mm/day',S.unit='m/day');
         }else{
-            plotzoo(Q,fn='Discharge.png',ylab='Q',unit='m^3/s');
+            plotzoo(Q,fn=paste(fnhead, '.png',sep='') ,ylab='Q',unit='m^3/s');
         }
         if (nq>1 && period >=1){
-            for (i in 1:nq){
-                
+            for (i in 1:nq){                
                 imgfile=paste("Discharge_mean_",i,".png",sep='') 
-                png(imgfile,width=1600, height=1600)
-                pihm.hydroplot(Q[,i],fn=imgfile, if.save=TURE,FUN=mean, ylab= "Q", var.unit = "m3/s")
+                #png(imgfile,width=1600, height=1600)
+                pihm.hydroplot(Q[,i],fn=imgfile, if.save=TRUE,FUN=mean, ylab= "Q", var.unit = "m3/s")
         #        plot(Q,type='l')
             }
         }else if (nq==1 & period >1) {

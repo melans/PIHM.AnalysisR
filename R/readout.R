@@ -27,6 +27,13 @@ readpihmmf <- function(fn,binary,ncol){
         data <- d[,-1];
         ts <- xts(data,order.by=t);
     }
+    
+    # Shift time ONE time-interval back.
+    nt=length(t);
+    dt=t[-1]-t[-nt];
+    t=t-mean(dt);
+    time(ts)=t;
+
     return(ts);
 }
 readpihm20 <- function(fn){
@@ -40,45 +47,66 @@ readpihm20 <- function(fn){
 #==============================
 
 
-readout <-function(ext,binary=TRUE, ncol,path){
+readout <-function(ext,binary=TRUE, ncol,path, reload=FALSE){
     if (missing(path)){
         path <- outpath;
     }else{
         path <- path;
     }
-    #cat("\t Reading file \n\t\t ",as.character(fn) ,"\n");
-    if (pihmver > 2.3){
-        if (binary){
-            fn=list.files(path=path,pattern=paste(projectname,'.',ext,'.dat$',sep=''),full.names=TRUE);
-        }else{
-            fn=list.files(path=path,pattern=paste(projectname,'.',ext,'.txt$',sep=''),full.names=TRUE);
-        }
-        message("\t Reading file \n\t\t ",as.character(fn) ,"\n");
-        
-#        if (length(fn)<=0){
-#            stop('\n\t Error: File ',paste(projectname,'.',ext,'.txt',sep=''),' does not exist.\n\n')
+#   rdsfile=file.path(path,paste(projectname,"_out.RData",sep=""));
+#    fns=list.files(path=outpath,pattern=paste(projectname,'.*.dat',sep=''),full.names=TRUE)
+#    tf = max(file.info(fns)[,'mtime'])  #max time tage of modification of .dat file
+#    tr = file.info(rdsfile)[,'mtime'] #time tag of rds file.
+#    if (missing(reload)){
+#        if (file.exists(rdsfile)){
+#            if (tf-tr >0){
+#                reload=TRUE;  #new output files.
+#            }else{
+#                reload=FALSE; #newest out files
+#            }
+#        }else{
+#            reload =TRUE;    #no rds file saved.
 #        }
-        if (file.exists(fn)){    
-            if(missing(ncol)){
-            if (grepl('^riv',ext) ){
-                riv <- readriv();
-                ncol <- riv$River$size;
-            }else{ 
-                mesh <- readmesh(); 
-                ncol <- mesh$size[1];
-            }            
+#    }
+#
+#    if ( ! reload){
+#         out = readRDS(file=rdsfile) #read from RDS file.
+#        ts=out[[ext]];
+#        mn=dim(ts);
+#        message('Reading ',ext, ' from ',rdsfile,'\n[',mn[1],',',mn[2],']\n');
+#    }else {
+        #cat("\t Reading file \n\t\t ",as.character(fn) ,"\n");
+        if (pihmver > 2.3){
+            if (binary){
+                fn=list.files(path=path,pattern=paste(projectname,'.',ext,'.dat$',sep=''),full.names=TRUE);
+            }else{
+                fn=list.files(path=path,pattern=paste(projectname,'.',ext,'.txt$',sep=''),full.names=TRUE);
             }
-            ts <- readpihmmf(fn,binary,ncol);
-        }else{
-            stop('\n\t Error: File does not exist.\n',fn,'\n')
-#           cat('\n\t Error: File ',paste(projectname,'.',ext,'.txt',sep=''),' does not exist.\n\n');
+            message("\t Reading file \n\t\t ",as.character(fn) ,"\n");
+            
+    #        if (length(fn)<=0){
+    #            stop('\n\t Error: File ',paste(projectname,'.',ext,'.txt',sep=''),' does not exist.\n\n')
+    #        }
+            if (file.exists(fn)){    
+                if(missing(ncol)){
+                    if (grepl('^riv',ext) ){
+                        riv <- readriv();
+                        ncol <- riv$River$size;
+                    }else{ 
+                        mesh <- readmesh(); 
+                        ncol <- mesh$size[1];
+                    }            
+                }
+                ts <- readpihmmf(fn,binary,ncol);
+            }else{
+                stop('\n\t Error: File does not exist.\n',fn,'\n')
+    #           cat('\n\t Error: File ',paste(projectname,'.',ext,'.txt',sep=''),' does not exist.\n\n');
+            }
         }
-    }
-    else{
-        fn=list.files(path=path,pattern=paste(projectname,'.',ext,'*',sep=''),full.names=TRUE);
-        ts <- readpihm20(fn);
-    }
-
+        else{
+            fn=list.files(path=path,pattern=paste(projectname,'.',ext,'*',sep=''),full.names=TRUE);
+            ts <- readpihm20(fn);
+        }
     return(ts);
 }
 

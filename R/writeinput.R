@@ -13,10 +13,14 @@ writeatt <-function(att,path=inpath){
     write.table(x=att,file=theFile,col.names=TRUE,row.names=FALSE,quote=FALSE)
 }
 
-writecalib <- function(calib){
-    theFile <- file.path(inpath, paste(projectname,".",'calib',sep=''));
-    bakFile <- file.path(inpath, paste(projectname,".",'calib.',as.character(Sys.time()),'-',rnorm(1),sep=''));
-    file.copy(theFile,bakFile)
+writecalib <- function(calib, newfilename){
+    if (missing(newfilename)){
+        theFile <- file.path(inpath, paste(projectname,".",'calib',sep=''));
+        bakFile <- file.path(inpath, paste(projectname,".",'calib.',as.character(Sys.time()),'-',rnorm(1),sep=''));
+        file.copy(theFile,bakFile)
+    }else{
+        theFile <- file.path(inpath, newfilename);
+    }
     file.create(file=theFile);
     for (i in 1:length(calib$offon) ) {
 

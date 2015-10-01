@@ -8,13 +8,15 @@ readUSGSgageLocal <- function (fn) {
 
     mat <- as.matrix(read.table(text=lines[rid:length(lines)]));
     sname <- unique(mat[,2]);
-    t <- as.Date(mat[,3]);
+    t <- as.Date(mat[,3]) ;
     ts <- xts(as.numeric(mat[,4])*0.3048^3,order.by=t)
     colnames(ts) <- paste(sname,'m^3/s') ;
     return( ts );
 }
 
 readUSGSQ <- function(siteid,sdate,edate){
+    loadinglib(liblist=c('EGRET' , 'dataRetrieval') )
+    
    # siteid <- '01576754'
     if(missing(sdate)){
         sdate <- '1900-01-01';

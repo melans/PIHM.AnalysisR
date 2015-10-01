@@ -14,13 +14,7 @@
 #' @examples
 #' loadoutputQ(outpath,projectname)
 
-plotall <-function(data){
-   nargin <- nargs();
-    if (nargin <1){
-        cat("\nUsage:\n\t PIHMout <- loadoutput(outpath=\"./\",projectname)\n");
-        cat("\n\n");
-        return(0);
-    }
+plotall <-function(data, if.save=FALSE){
     if (missing(data)){
         pihm <- loadoutput();
     }
@@ -34,19 +28,18 @@ plotall <-function(data){
     nm=names(pihm);
     for ( i in 1:length(pihm) ){
         if (!is.null(pihm[[i]])){
+            x11()
             cat(i,"\tplotting ",nm[i],"\n");
-            imgfile=file.path(Resultpath,paste(as.character(nm[i]),".png",sep=''));
-            png(imgfile,width=1000, height=1000)
+            if (if.save) {
+                imgfile=file.path(Resultpath,paste(as.character(nm[i]),".png",sep=''));
+                png(imgfile,width=1000, height=1000)
+            }
             matplot(pihm[[i]],type='l',ylab=nm[i])
-            dev.off()
+            if (if.save) {
+                dev.off()
+            }
         }
     }
-    if (missing(data)){
-            return(pihm);
-    }
-    else{
-    }
-
 }
 
 pihmplot <- function (ts ){

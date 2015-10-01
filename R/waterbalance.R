@@ -15,6 +15,8 @@ wb <- function(pihmout, period='yearly',if.drawmap=FALSE){
     Edt <- para[[which(grepl('^et',tolower(names(para))))]];
     Qdt <- para[[which(grepl('^rivflx1',tolower(names(para))))]];
     
+    poro<-getporosity(bak=TRUE,if.calib=TRUE);
+
     if(!exists('PIHMOUT') & missing(pihmout) ){
         PIHMOUT <- loadoutput();
         assign('PIHMOUT', PIHMOUT,envir=.GlobalEnv);
@@ -25,6 +27,7 @@ wb <- function(pihmout, period='yearly',if.drawmap=FALSE){
     iarea <- readarea(bak=T);
     area <- sum(iarea);
     init <- readinit(bak=TRUE)
+
     minit <- t(init$minit);
     rinit <- t(init$rinit);
     rownames(minit)=toupper(rownames(minit));
@@ -33,11 +36,14 @@ wb <- function(pihmout, period='yearly',if.drawmap=FALSE){
     calib <- readcalib(bak=TRUE);
     
     t=PIHMOUT$CommonTime;
+    t=t[-length(t)];
     Q <- PIHMOUT$rivFlx1[t,outlets];
     if (grepl('^year',tolower(period))  ){
         pihm.period <- pihm.yearly
+        ny=length(apply.yearly(t,FUN=sum));
     }else{
         pihm.period <- pihm.monthly
+        ny=length(apply.monthly(t,FUN=sum));
     }
     if(ncol(Q)>1){
         Q=xts(rowSums(Q),order.by=t);
@@ -55,7 +61,6 @@ wb <- function(pihmout, period='yearly',if.drawmap=FALSE){
     ET0 <- PIHMOUT$ET0[t] ;
     ET1 <- PIHMOUT$ET1[t];
     ET2 <- PIHMOUT$ET2[t];
-
     GW <- PIHMOUT$GW[t];
     UNSAT <- PIHMOUT$unsat[t];
     SNOW <- PIHMOUT$snow[t];
@@ -66,11 +71,9 @@ wb <- function(pihmout, period='yearly',if.drawmap=FALSE){
     RIVGW <- PIHMOUT$rivGW[t];
     
 
-    FLUXSURF <- PIHMOUT$FluxSurf1[t];
-    FLUXSUB <- PIHMOUT$FluxSub1[t];
-    FLUXSURF <- PIHMOUT$FluxSurf1[t]+PIHMOUT$FluxSurf2[t]+PIHMOUT$FluxSurf0[t]
-    FLUXSUB <- PIHMOUT$FluxSub1[t]+PIHMOUT$FluxSub2[t]+PIHMOUT$FluxSub0[t] 
-    ny=length(unique(year(t)))
+    FLUXSURF<- (PIHMOUT$FluxSurf1[t]+PIHMOUT$FluxSurf2[t]+PIHMOUT$FluxSurf0[t])*86400
+    FLUXSUB<-(PIHMOUT$FluxSub1[t]+PIHMOUT$FluxSub2[t]+PIHMOUT$FluxSub0[t])*86400
+
     ncell=length(iarea);
     yrtag=time(apply.yearly(t,FUN=mean));
     
@@ -82,19 +85,23 @@ wb <- function(pihmout, period='yearly',if.drawmap=FALSE){
     
 
     YcET <- YcET0+YcET1+YcET2;
-    ny <- length(unique(year(t)));
-    marea <- t(replicate(ny,iarea));
-
-    YwET0 <- xts(rowSums( YcET0[t] * marea) /area,order.by=Yt);
-    YwET1 <- xts(rowSums( YcET1[t] * marea) /area,order.by=Yt);
-    YwET2 <- xts(rowSums( YcET2[t] * marea) /area,order.by=Yt);
+    #marea <- t(replicate(ny,iarea));
+    
+    YwET0 <- xts(rowSums( matRowMulti( YcET0[t] , iarea) ) /area,order.by=Yt);
+    YwET1 <- xts(rowSums( matRowMulti( YcET1[t] , iarea) ) /area,order.by=Yt);
+    YwET2 <- xts(rowSums( matRowMulti( YcET2[t] , iarea) ) /area,order.by=Yt);
+    
+#    YwET0 <- xts(rowSums( YcET0[t] * marea) /area,order.by=Yt);
+#    YwET1 <- xts(rowSums( YcET1[t] * marea) /area,order.by=Yt);
+#    YwET2 <- xts(rowSums( YcET2[t] * marea) /area,order.by=Yt);
 
     colnames(YwET0)='IC m/yr' 
     colnames(YwET1)='Et m/yr' 
     colnames(YwET2)='Evp m/yr' 
     
-    Ycfsub <- ( pihm.period(FLUXSUB,FUN=sum) )/marea;   #volume to height. m^3 to m  ; per year;
-    Ycfsurf <- ( pihm.period(FLUXSURF,FUN=sum) )/ marea;#volume to height. m^3 to m  ; per year;
+    Ycfsub <- matRowMulti( pihm.period(FLUXSUB,FUN=sum) ,1/iarea);   #volume to height. m^3 to m  ; per year;
+    Ycfsurf <- matRowMulti( pihm.period(FLUXSURF,FUN=sum),1/iarea);#volume to height. m^3 to m  ; per year;
+    
     Qsubyr <- xts(rowSums(Ycfsub),order.by=Yt);
     Qsurfyr <- xts(rowSums(Ycfsurf),order.by=Yt);
     names(Qsubyr)='Qsub m/yr'
@@ -103,48 +110,45 @@ wb <- function(pihmout, period='yearly',if.drawmap=FALSE){
     iD_is <- periodchange(IS,minit['IS',],period=period) ;
     iD_snow <- periodchange(SNOW,minit['SNOW',],period=period) ;
     iD_surf <- periodchange(SURF,minit['OVERLAND',],period=period) ;
-    iD_unsat <- periodchange(UNSAT,minit['UNSAT',],period=period) ;
-    iD_gw <- periodchange(GW,minit['SAT',],period=period) ;
-
+    iD_unsat <- matRowMulti(periodchange(UNSAT,minit['UNSAT',],period=period) , poro[2,]);
+    iD_gw <- matRowMulti(periodchange(GW,minit['SAT',],period=period) , poro[2,]);
     ds <- iD_gw +iD_unsat +iD_snow +iD_surf +iD_is;
 #====prcp===========
     mid <- att[,which(grepl('^meteo',tolower(colnames(att))))];
-    if ( exists('forc') ){
-    }else{
-        forc=readforc();
-    }
-    Pdata <- apply.daily(forc$PRCP$ts1 /1000, FUN=mean) * 86400; #mm to meter.
+
+    prcp=readprcp();
+    Pdata <- apply.daily(prcp /1000, FUN=mean) * 86400; #mm to meter.
     ptime=time(Pdata);
     pt=round(ptime,'days');
     Prcp=xts(Pdata,order.by=pt);
     P=Prcp[t] * calib$value['PRCP'];    #precipitation    
-    Pyr <- pihm.period(P,FUN=sum)
-    colnames(Pyr)='Prcp m/yr' 
 
-    YcP <- xts(matrix(rep(Pyr,length(mid)),nrow=ny),order.by=Yt);
+    iPyr <- pihm.period(P,FUN=sum)
+
+    YcP <- iPyr[,mid] ;
 
     cpeq <- YcP- YcET - Ycfsub -Ycfsurf;
 #======Delta S, (m)    
-    dsH <- xts(rowSums((ds*marea)/area), order.by=time(ds)); # Storage change of each cell. (m) of each period,e.g yearly,monthly.
+    dsH <- xts(rowSums(matRowMulti(ds,iarea)/area), order.by=time(ds)); # Storage change of each cell. (m) of each period,e.g yearly,monthly.
     colnames(dsH)=paste('Delta Strg (m)') 
     
-    dcpeq <- xts(rowSums((cpeq*marea)/area), order.by=time(ds));  #P-E-Qsurf-QGW of each cell. (m) of each period, e.g yearly, monthly.
+    dcpeq <- xts(rowSums(matRowMulti(cpeq,iarea)/area), order.by=time(ds));  #P-E-Qsurf-QGW of each cell. (m) of each period, e.g yearly, monthly.
     colnames(dcpeq)='P-EQ (m)' 
     if (if.drawmap){
          data=colSums(ds);
          PIHM.triplot(data=data,
-                      fn=paste('WB_Storage_',para$START,'_to_',t[length(t)],'.png',sep=''),
+                      fn=paste('WB_Storage_',para$START,'_to_',t[length(t)],period,'.png',sep=''),
                       name='Storage Change(m)',
                       title=paste('Delta S',para$START,'to',t[length(t)] )
                       );
          data=colSums(cpeq);
          PIHM.triplot(data=data,
-                      fn=paste('WB_PEQ_',para$START,'_to_',t[length(t)],'.png',sep=''),
+                      fn=paste('WB_PEQ_',para$START,'_to_',t[length(t)],period,'.png',sep=''),
                       name='P-ET-Q(m)',
                       title=paste('P-ET-Q',para$START,'to',t[length(t)] ) 
                       );
     }
-
+    Pyr=rowSums( matRowMulti(YcP, iarea)  )/area
     #==============based on each cells ======================
     #Pyr-Qsubyr-Qsurfyr-YwET0-YwET1-YwET2
     #water balance based on cells. No river in account.
@@ -157,15 +161,15 @@ wb <- function(pihmout, period='yearly',if.drawmap=FALSE){
 
     #=============Whole watershed ; cells+rivers ==============
     rarea=riv$surfArea;
-    rivStage=PIHMOUT$rivstage;
+    rivStage=PIHMOUT$rivstage[t];
     iD_stage <- periodchange(rivStage,rinit['RIVERSTATE',],period=period) ;
 
-    rivGW=PIHMOUT$rivGW;
+    rivGW=PIHMOUT$rivGW[t];
     iD_rivGW <- periodchange(rivGW,rinit['SATUNDRIV',],period=period) ;
     
     YdsRivV=  storageRiver(H=iD_stage)+storageRiver(H=iD_rivGW);    # in Volume (m3)
     
-    Ywds <- xts(rowSums((ds*marea )/area)+ rowSums((YdsRivV )/area), order.by=time(ds));   # storage change for WHOLE WATERSHED of period, eg. yearly, monthly.. 
+    Ywds <- xts(rowSums(matRowMulti(ds,iarea )/area)+ rowSums((YdsRivV )/area), order.by=time(ds));   # storage change for WHOLE WATERSHED of period, eg. yearly, monthly.. 
     colnames(Ywds)='Delta Strg (m)'
     Y_W_PEQ=cbind(Pyr,Qyr,YwET0,YwET1,YwET2,(Pyr-Qyr-YwET0-YwET1-YwET2),Ywds); # P-E-Q for WHOLE WATERSHED of period, eg. yearly, monthly..
     colnames(Y_W_PEQ)[6]='P-EQ'
@@ -186,14 +190,18 @@ wb <- function(pihmout, period='yearly',if.drawmap=FALSE){
     }
 
     ylines=rep(100,ny);
-    fn='WaterBalance_Bar_Watershed.png';
+    fn=paste('WaterBalance_Bar_Watershed_',period,'.png',sep='');
     data<- pwPEQ[,2:5]
+    data[is.infinite(data)]=NaN
+    data[is.na(data)]=0;
     #Qyr,YwET0,YwET1,YwET2
     col= colors()[c(28,68,50,25)]
     pihm.barplot(fn=fn,data=data,ylab='Percentage to Precipitation',title='Water balance on watershed',yline=ylines,col=col);
     
-    fn='WaterBalance_Bar_Cells.png';
+    fn=paste('WaterBalance_Bar_Cells_',period,'.png',sep='');
     data<- pcPEQ[,2:6]
+    data[is.infinite(data)]=NaN
+    data[is.na(data)]=0;
     #Qsubyr,Qsurfyr,YwET0,YwET1,YwET2,
     col=colors()[c(30,128,68,50,25)]
     pihm.barplot(fn=fn,data=data,ylab='Percentage to Precipitation',title='Water banlance on cells',yline=ylines,col=col);
@@ -233,12 +241,12 @@ periodchange <- function(x,xinit, period='null'){
     x0 <- x[-nx];    
     time(x0) = time(x0)+ diff(time(x));
     x0=xts(rbind(xi,x0),order.by=time(x));
-    dx=x-x0;
+    dx=x-x0     #daily change
     
     if (grepl('^year',tolower(period)) ){
         ds= pihm.yearly(dx,FUN=sum) ;
         ret=ds;
-    }else if (grepl('^year',tolower(period)) ){
+    }else if (grepl('^monthly',tolower(period)) ){
         ds= pihm.monthly(dx,FUN=sum) ;
         ret=ds;
     }
@@ -260,10 +268,18 @@ pihm.monthly <- function(x,FUN){
 pihm.yearly <- function(x,FUN){
     t=time(apply.yearly(x,FUN=FUN)) ;
 #   xx = apply.yearly(x,FUN=FUN);
-    xx <- sapply(x,function(data) apply.yearly(data,FUN=FUN)); 
+    xx <- sapply(x,function(xt) apply.yearly(xt,FUN=FUN)); 
     y <- xts(matrix(xx,nrow=length(t),ncol=ncol(x)),order.by=t);
     
     return(y);
 }
 
-
+pihm.wholeperiod <- function(x,FUN=sum){
+    t=time(x) ;
+    t=t[length(t)] 
+#   xx = apply.yearly(x,FUN=FUN);
+    xx <- FUN(x); 
+    y <- xts(matrix(xx,nrow=length(t),ncol=ncol(x)),order.by=t);
+    
+    return(y);
+}

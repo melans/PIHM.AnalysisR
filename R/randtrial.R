@@ -52,9 +52,9 @@ readtrial <- function(){
     return(trials);
 }
 
-calibSets <- function(trials, calib) {
+calibSets <- function(trials, calib, keylist=list()) {
    # if (missing(calib)){
-        calib <- readcalib();
+        calib <- readcalib(bak=FALSE);
    # }
     onid <- which(calib$offon) ;
     names <- names(calib)
@@ -65,7 +65,19 @@ calibSets <- function(trials, calib) {
     trials <- readtrial();
     
     triallen <- do.call(rbind, lapply(trials, function(x) length(x))) 
+
     mattrial <- expand.grid(trials)
+    nk=length(keylist)
+    if(nk>0)
+    for (i in 1:nk){
+        keys=toupper(keylist[[i]] );
+        for(j in 2:length(keys)){
+            mattrial[,keys[j]] <- mattrial[,keys[1]];
+        }
+    }
+    
+    mattrial=unique(mattrial);
+
     aname <- names(calib$value)
     bname <- names(trials);
     cname <- union(names(calib$value),names(trials))
@@ -74,6 +86,7 @@ calibSets <- function(trials, calib) {
     offon <- as.logical(1:nlen);
     comments <- character(nlen);
     calibSets <- list();
+    
     for (i in 1:prod(triallen)){
         triline <- as.numeric(mattrial[i,]);
         names(triline) <- bname;
@@ -100,9 +113,10 @@ settrial <- function(name, values){
 }
 
 
+
 randtrial  <- function(){
     trials <- readtrial();
-    calib <- readcalib();
+    calib <- readcalib(bak=FALSE);
     sets <- calibSets(trials, calib);
     
     nsets <- length(sets);
@@ -140,8 +154,8 @@ randtrial  <- function(){
         
         message('\t\tTrial #', i, ' is finished. \t@',Sys.time(),'\n' );
     }
-
 }
+
 testdopar  <- function(){
     nsets=10;
     ncores=5;

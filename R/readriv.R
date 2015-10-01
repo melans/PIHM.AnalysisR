@@ -37,20 +37,20 @@ readriv <-function(bak=FALSE){
     riv <-t( matrix (scan(theFile,what=integer(),nlines=nriv,blank.lines.skip = TRUE,quiet = TRUE,skip=moveon+1), ncol=nriv))
     outlets=which(riv[,4]<0);
 #Shape
-    moveon=which(tolower(lines) == "shape")
+    moveon=which(grepl('^shape',tolower(lines) ) )
     nshp=scan(theFile,what=integer(),nmax=1,blank.lines.skip = TRUE,quiet = TRUE,skip=moveon);
     shphead=scan(theFile,what=character(),nlines=1,blank.lines.skip = TRUE,quiet = TRUE,skip=moveon);
     shp <-t( matrix (scan(theFile,what=numeric(),nlines=nshp,blank.lines.skip = TRUE,quiet = TRUE,skip=moveon+1), ncol=nshp))
 
 #Materials
-    moveon=which(tolower(lines) == "material")
+    moveon=which(grepl("^material",tolower(lines) )  )
     nmat=scan(theFile,what=integer(),nmax=1,blank.lines.skip = TRUE,quiet = TRUE,skip=moveon);
     mathead=scan(theFile,what=character(),nlines=1,blank.lines.skip = TRUE,quiet = TRUE,skip=moveon);
     mat <-t( matrix (scan(theFile,what=numeric(),nlines=nmat,blank.lines.skip = TRUE,quiet = TRUE,skip=moveon+1), ncol=nmat))
     
 
 #IC
-    moveon=which(tolower(lines) == "ic")
+    moveon=which( grepl( "^ic", tolower(lines) ) )
     nic=scan(theFile,what=integer(),nmax=1,blank.lines.skip = TRUE,quiet = TRUE,skip=moveon);
     ichead=scan(theFile,what=character(),nlines=1,blank.lines.skip = TRUE,quiet = TRUE,skip=moveon);
     ic <-t( matrix (scan(theFile,what=numeric(),nlines=nic,blank.lines.skip = TRUE,quiet = TRUE,skip=moveon+1), ncol=nic))

@@ -86,10 +86,7 @@ newtest <-function(){
 
 }
 testhydrograph <- function(P,Q){
-    if(!exists('forc')){
-        forc<-readforc();
-    }
-    prcp=forc$PRCP$ts1
+    prcp=readprcp() # forc$PRCP$ts1
     time(prcp)=round(time(prcp),units='days');
     pdaily=apply.daily(prcp,FUN=mean);
 

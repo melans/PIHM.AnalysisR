@@ -8,12 +8,34 @@
 #' @return 
 #' @export  
 #' @examples
-pbstrial  <- function(pbsfile){
+pbsaset <-function(pj){
+    fd=list.files('../input',pattern=pj,full.names=TRUE);
+    if (length(fd)==1){
+        inpath=fd;
+    }
+    outpath='./'
+    projectname=pj;
+    
+    Sys.setenv(TZ = "UTC")
+    PIHM(indir=inpath,outdir=outpath,pname=projectname,ver=2.4)
+}
+pbsset <-function(pj){
+    fd=list.files('input',pattern=pj,full.names=TRUE);
+    if (length(fd)==1){
+        inpath=fd;
+    }
+    outpath='./'
+    projectname=pj;
+    
+    Sys.setenv(TZ = "UTC")
+    PIHM(indir=inpath,outdir=outpath,pname=projectname,ver=2.4)
+}
+pbs.trial  <- function(pbsfile){
     if(missing(pbsfile)){
         pbsfile=generatepbs();
     }
     trials <- readtrial();
-    calib <- readcalib();
+    calib <- readcalib(bak=FALSE);
     sets <- calibSets(trials, calib);
     
     nsets <- length(sets);
@@ -45,13 +67,93 @@ pbstrial  <- function(pbsfile){
            
     }
 }
-writepbs <-function(fn,cmd){
-    if(missing(fn)){
-        fn= paste('pbs','.',projectname,sep='')
-    }         
+
+
+pbsPIHM.calibration  <-
+    function(keylist=list(),wallhours=24,memory='1gb',
+             quiet=TRUE,shnum=1, if.pbs=TRUE,RDSfile){
+    #shnum -- number of shell files.
+    # if.pbs --- if run the calibration on PBS. default=TRUE. 
+    trials <- readtrial();
+    calib <- readcalib(bak=FALSE);
+    if (missing(RDSfile)){
+        sets <- calibSets(trials, calib,keylist=keylist);
+        saveRDS(file='calibMatrix.RDS',sets);
+    }else{
+        sets <- readRDS(file='calibMatrix.RDS')
+    }
+    nsets <- length(sets);
+    #ncores <- min(nsets,MAX_THREADS);
+   
+       shfn=paste('pbs',seq(1,shnum,by=1),'.sh',sep='');
+   nlines=ceiling(nsets/shnum);
+       shlines=character(); 
+       shlines[1]='#!/bin/bash';
+    ish=1;
+    il = 1; # control the line number of shlines.
+    
+   message('\n\n',nsets,' trials are waiting for resources. \n', shnum,' shell file(',nlines,' lines each) will be genrated.\n');
+    if(!quiet){
+   message('Go on ? Yes/(No) ');
+   line <- readline()
+   if ( !grepl('^y', tolower(line)) ){
+       stop(' Abort. \n');
+   }
+    }
+   message('\n\nStart calibration processes\t',Sys.time(),'\n');
+   pbslines=character(nsets);
+    for(i in 1:nsets)       
+    {  
+        num=formatC(i, width = round(log10(nsets)), format = "d", flag = "0")
+        fn=paste(projectname,'_',num,'.', strftime(Sys.time(),format='%y%m%d', tz='UTC'),sep='');
+        calibfn=paste(fn,'.calib', sep='');
+        calibpath=file.path(inpath, calibfn)
+            Sys.sleep(0.01)
+
+        writecalib(sets[[i]],newfilename=calibfn);
+        pbsfn=paste(fn,'.pbs',sep='');
+        logfn=paste(fn,'.log',sep='');
+    
+#        while( file.exists(file=calibpath) | file.exists(file=pbsfn)){V
+#            lag = 1 #runif(1,max=5,min=1);   #lag time before start PIHM.
+#            Sys.sleep(lag)
+#            fn=paste(projectname,'.', strftime(Sys.time(),format='%y%m%d-%H%M%S'),sep='');
+#            calibfn=paste(fn,'.calib', sep='');
+#            calibpath=file.path(inpath, calibfn)
+#            pbsfn=paste(fn,'.pbs',sep='');
+#            logfn=paste(fn,'.log',sep='');
+#        }        #pbscmd=paste('./pihm', '-c ',calibfn, projectname, fn, '> ', logfn, sep=' ')
+        pbscmd=paste('./pihm', '-c ',calibfn, projectname, fn, sep=' ')
+
+        if (if.pbs){
+            writepbs(fn=pbsfn,pbscmd,wallhours=wallhours,memory=memory)
+            if (!quiet){      
+                message('\n\nStart pbs job #', i, '\t@',Sys.time(),'\n');
+                message('qsub ',pbsfn);
+            }
+            syscmd=paste('qsub ',pbsfn, sep=' ')     
+        }else{
+            syscmd=pbscmd   
+        }
+
+        shlines[il*2]=paste('#',i, syscmd);
+        shlines[il*2+1]=(syscmd);
+        il = il + 1;
+        if ( i %% nlines == 0 | i >=nsets){
+            write(shlines,file=shfn[ish],append=FALSE);
+            ish = ish + 1 
+            il=1;
+            shlines=character(); 
+            shlines[il]='#!/bin/bash'; 
+        }
+    }
+}
+
+writepbs <-function(fn= paste(projectname,'.','pbs',sep=''),cmd,wallhours=24,memory='1bg'){
     pbsfile <- file.path('./',fn);
-    pbsstr=c('#PBS -l nodes=1;',
-           '#PBS -l walltime=24:00:00',
+    pbsstr=c('#PBS -l nodes=1',
+           paste('#PBS -l walltime=',wallhours,':00:00',sep=''),
+           paste('##PBS -l pmem=',memory,sep=''),
            '#PBS -j oe',
             'cd $PBS_O_WORKDIR',
            cmd
@@ -60,13 +162,14 @@ writepbs <-function(fn,cmd){
     return(fn);
 }
 
-generatepbs <-function(fn){
+generatepbs <-function(fn,wallhours=24,memory='1gb'){
     if(missing(fn)){
         fn= paste('pbs','.',projectname,sep='')
     }         
     pbsfile <- file.path('./',fn);
     pbsstr=c('#PBS -l nodes=1;',
-           '#PBS -l walltime=24:00:00',
+           paste('#PBS -l walltime=',wallhours,':00:00',sep=''),
+           paste('#PBS -l pmem=',memory,,sep=''),
            '#PBS -j oe',
             'cd $PBS_O_WORKDIR',
            paste('./pihm -d -v ',projectname)
@@ -75,23 +178,43 @@ generatepbs <-function(fn){
     return(fn);
 }
 
-pbswritecalib <- function(calib){
-    fn= paste(projectname,".",'calib.',as.character(Sys.time()),sep='');
-    theFile <- file.path(inpath, fn);
-    i=0;
-    while( exists(theFile)){
-        fn=paste(projectname,".",'calib.',as.character(Sys.time()),'_',sep='')
-        theFile<- file.path(inpath, fn);
-    }
-    file.create(file=theFile);
-    for (i in 1:length(calib$offon) ) {
-
-        if (calib$offon[i]){
-            str = paste(names(calib$value[i]),calib$value[i],calib$comments[i],sep='\t') ;
-        }else{
-            str = paste(paste('#',names(calib$value[i]),sep=''),calib$value[i],calib$comments[i], sep='\t')
+qs <- function(option=paste('-u',system('whoami',,ignore.stdout = FALSE,
+                                        intern=TRUE, ignore.stderr = FALSE ) ),
+               if.return=FALSE){
+    q=qstat(option=option);
+    nq=nrow(q);
+    message(nq, " Jobs.");
+    status <- q[,'S']
+    sta<-rep('unkown',length(status));
+    sta[which(grepl('C',status))]='Cancelling'
+    sta[which(grepl('Q',status))]='Waiting'
+    sta[which(grepl('R',status))]='Runing'
+    
+    usta <- unique(sta);
+    for (i in 1:length(usta)){
+        numb = sum(sta==usta[i])
+        if (numb >0){
+            message( numb,' Jobs in ', usta[i], '\n');
         }
-            write(x=str,file=theFile,append =TRUE)
     }
-    return(fn);
+    usercol <- q[,'Username'];
+    uu=unique(usercol);
+    message(length(uu), ' users in queue');
+    if(if.return){
+        return(q)
+    }
+    else{
+    }
+}
+
+qstat <- function(option='' ){
+    cmd=paste('qstat ', option, sep='');
+    lines <- system(cmd ,ignore.stdout = FALSE, intern=TRUE, ignore.stderr = FALSE);
+    #lines=lines[-(c(1:3,5))]
+    #head=lines[4];
+    head=c("Job ID", "Username", "Queue", "Jobname", "SessID", "NDS", "TSK", "Memory", "Time", "S", "Time")
+    lines=lines[-c(1:5)]
+    a=as.matrix(read.table(text=lines))
+    colnames(a)=head
+    return(a);
 }

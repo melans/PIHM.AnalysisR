@@ -27,7 +27,7 @@ pihm.plot <- function(x,fn='pihm.plot.png',if.save=TRUE,ylab='Y',xlab='X'){
     }
 
 }
-plotzoo <- function(x, screen=1,color,format='png',fn='plotzoo.png', if.save=TRUE,ylab='',unit=''){
+plotzoo <- function(x,y, screen=1,color,format='png',fn='plotzoo.png', if.save=TRUE,ylab='',unit='', holdon=FALSE){
       #  library(rgl)
     if (if.save && grepl('^png',tolower(format)) ){
         if(exists('Resultpath')){
@@ -37,20 +37,27 @@ plotzoo <- function(x, screen=1,color,format='png',fn='plotzoo.png', if.save=TRU
         }
         png(imgfile,width=40, height=30,unit='cm',res=100)
     }
-    ncol=ncol(x);
-#    cmx <- abs(colMeans(x));
-#    ord=order(cmx);
-#    col <- rainbow(cmx+1) # assign colors to heights for each point
-    if(missing(color)){
-        color <- rainbow(ncol) # assign colors to heights for each point
+    if(missing(y)){
+        ncol=ncol(x);
+        if(missing(color)){
+            color <- rainbow(ncol) # assign colors to heights for each point
+        }
+
+
+        plot.zoo(x,screen=screen,col=color,ylab=paste(ylab,'(',unit,')'),xlab='Time');
+    }else {
+        ncol=ncol(y);
+        if(missing(color)){
+            color <- rainbow(ncol) # assign colors to heights for each point
+        }
+        plot.zoo(x=x,y=y,screen=screen,col=color,ylab=paste(ylab,'(',unit,')'),xlab='Time');
     }
 
-    #col<-topo.colors(ncol)
-    #ordcol=col[ord];
-    plot.zoo(x=x,screen=screen,col=color,ylab=paste(ylab,'(',unit,')'),xlab='Time');
 
     if (if.save){
+        if(!holdon){
         dev.off();
+        }
     }
     
 }
@@ -117,18 +124,15 @@ pihm.hydroplot <- function(x, FUN,fn='HydroPlot.png', if.save=TRUE,ylab='Y',var.
     }
 }
 
-imagecontrol <- function(fn, path=Resultpath){
-    
-    wd=1600;
-    ht=1600;
-    units = "px"
-    res=NA;
-    bg='transparent'
-    
-    imgfile=file.path(Resultpath,fn)
+imagecontrol <- function(fn, path=Resultpath,wd=25,ht=20, units="cm", res=160, bg='transparent'){
+pihm.dev.close()
+    imgfile=file.path(path,fn)
     nc=nchar(fn);
     
     ftype=substr(fn,nc-2,nc);   #extension of file name, which will be cmd for next line.
+    if (grepl('jpg',tolower(ftype) )){
+        ftype='jpeg'
+    }
     cmd=paste(ftype,"(imgfile,width=wd, height=ht,units=units, res=res, bg=bg)")
         eval(parse(text=cmd)); 
 }
@@ -147,4 +151,13 @@ pihm.barplot <- function(fn,data,col,ylab='',title='',ylines,ycolor='red'){
         lines(x=df.bar, y=ylines, col=ycolor);
     }
     dev.off();
+}
+pihm.dev.close <- function(){
+    dl <- dev.list();
+    nd = length(dl)
+    if (nd >0){
+        for(i in 1:nd){
+            dev.off();
+        }
+    }
 }

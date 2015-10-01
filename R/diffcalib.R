@@ -1,11 +1,12 @@
 
 
-diffcalib<-function(dir,flist){
+diffcalib<-function(dir,flist,pattern){
+    #find difference of calib.bak file in different folders.
     if (missing(flist)){
         if(missing(dir)){
             dir='./';
-             flist=list.files(dir)
-             dirlist=list.files(dir,full.name=TRUE)
+             flist=list.files(dir,pattern=pattern)
+             dirlist=list.files(dir,pattern=pattern,full.name=TRUE)
         }
     }else{
     }

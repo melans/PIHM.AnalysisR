@@ -11,116 +11,35 @@
 #' @export  output data.
 #' @examples
 #' PIHM()
- 
-PIHM.3Dmap<-function(data,terrain=FALSE,name='value',zratio=0,dist=0,fn='3Dmap.png',path=Resultpath,title='map',heatmap=FALSE){
-    if ( !x11.ready() ){
-        return(0)
-    }
 
+PIHM.trimesh<-function(cellid=0){
     mesh <- readmesh(bak=TRUE);
     riv <- readriv(bak=TRUE);
     msh <- mesh$mesh;
     pts <- mesh$points;
-    x=(pts[msh[,2],2]+pts[msh[,3],2]+pts[msh[,4],2])/3;
-    y=(pts[msh[,2],3]+pts[msh[,3],3]+pts[msh[,4],3])/3;
-    z=(pts[msh[,2],4]+pts[msh[,3],4]+pts[msh[,4],4])/3;
-    xlim <- range(x);
-    ylim <- range(y);
-    dx=(xlim[2]-xlim[1])/200;
-    dy=dx; #(ylim[2]-ylim[1])/100;
-    xc <- seq(xlim[1], xlim[2],by=dx);
-    yc <- seq(ylim[1], ylim[2],by=dy);
-    zname='Elevation'
-    if (missing('data')){
-        mat <- interp(x,y,z,xo=xc,yo=yc);
-        H=mat$z;
-        vname=zname;
-    }else{
-        mdata <-interp(x,y,data,xo=xc,yo=yc);
-        if (terrain){
-            mat <- interp(x,y,z,xo=xc,yo=yc);
-            H <- mat$z + mdata$z;   # Terrain + spatial data
-            vname=paste(zname,'+',name);
-        }else{
-            H <- mdata$z;
-            vname=name;
-        }
-    }
+    tri <- msh[,2:4];
+    m <- nrow(tri);
+    x=t(matrix(c(pts[tri[,1],2],pts[tri[,2],2],pts[tri[,3],2]),m,3) );
+    y=t(matrix(c(pts[tri[,1],3],pts[tri[,2],3],pts[tri[,3],3]),m,3) );
+    z=t(matrix(c(pts[tri[,1],4],pts[tri[,2],4],pts[tri[,3],4]),m,3) );
     
-    Hlim <- round(range(H[!is.na(H)]))
-    dhdx <- diff(Hlim) / min(diff(xlim),diff(ylim));
-    zr <- 1;
-    if (dhdx < 1/10 ) {
-        zr <-  round(1/10/dhdx) ;
-        warning('\n\tdh/dx = ',round(dhdx,digits=5),'.\tZ ratio > ', zr, ' is recommended');
-        if (zratio <= 0){
-            zr <- zr;
-        }else{
-            zr <- zratio;
-        }
+    if(cellid==0){
+        cellid=1:m;
     }
-    
+    rows=combn(1:3,2);
+    xx=x[rows,cellid];
+    yy=y[rows,cellid];
+    zz=z[rows,cellid];
+    segments3d(xx,yy,zz,color=rgb(0,.81,0,alpha=0.5))
+    PIHM.rivplot(shift=100);
 
-    H <-  H;
-     Hlim <- range( H[!is.na(H)] )
-    Hlen=max(diff(round(Hlim)),5);
-    idd <- classify(seq(from=Hlim[1],to=Hlim[2], length.out=Hlen), H);
-    
-    colorlut <- terrain.colors(Hlen,alpha=1) # height color lookup table
-    col <- colorlut[ idd ] # assign colors to heights for each point  
-    
-    rgl.open();
-    par3d(windowRect = c(10, 10, 600, 600))
-    Sys.sleep(0.1)
-    rgl.pop("lights") 
-    light3d(specular="black") 
-#    surface3d(xc, yc, H, coord=1:3, color=col, alpha=0.75, back="lines")
-    terrain3d(xc, yc, H, coord=1:3, color=col, alpha=0.75, back="lines")
-     #aspect3d(x=1,y=1,z=zr)
-    if(sd(H)>1e-6){
-        message("stand deviation=",sd(H));
-        bgplot3d( suppressWarnings ( image.plot( legend.only=TRUE, legend.args=list(text=vname), zlim=Hlim/factor,col=colorlut) )  )#legend
-    }
-    #persp3d(xc, yc, H, coord=1:3, color=col, alpha=0.75, back="lines")
-
-    grid3d(c("x", "y+", "z"))
-    #rgl.surface(yc, xc, H, coord=1:3, color=col, alpha=0.75, back="lines")
-    if (heatmap){
-        colorlut <- heat.colors(Hlen,alpha=1) # use different colors for the contour map
-        col <- colorlut[ idd] 
-        if (dist ==0){
-            dist=mean(H[!is.na(H)])-diff(Hlim);
-        }else{
-            dist <- dist;
-        }
-        
-        surface3d(xc, yc, matrix(dist, nrow(H), ncol(H)),color=col, back="fill")
-    }
-    
-    title3d(title, col = 'blue')
-    
-    PIHM.rivplot(shift=dist,zratio=1,riv.ele=dist*2);    #plot river network.
-
-
-    rgl.viewpoint(0, 0)
-    
-    filepath=file.path(path,fn); 
-    nf=nchar(filepath);
-    filefmt=substr(filepath,nf-2,nf);
-    if(grepl('eps|svg|pdf',filefmt) ){
-        rgl.postscript(filepath, fmt = filefmt)
-    }else{
-        snapshot3d(filepath, fmt = filefmt);
-    }
-    return(diff(Hlim));
 }
 
-PIHM.3Dtriplot<-function(data,cellid,rivid,terrain=FALSE, name='value',zratio=0,fn='triplot.png',path=Resultpath,title='3Dtriangles',color='red',shift=1,colorFUN=terrain.colors){
+PIHM.triplot<-function(data,cellid,rivid,terrain=FALSE, name='value',fn='triplot.png',path=Resultpath,title='3Dtriangles',color='red',shift=1,colorFUN=terrain.colors){
     if ( !x11.ready() ){
         return(0)
     }
-
-    mesh <- readmesh(bak=TRUE);
+mesh <- readmesh(bak=TRUE);
     riv <- readriv(bak=TRUE);
     msh <- mesh$mesh;
     pts <- mesh$points;
@@ -153,18 +72,7 @@ PIHM.3Dtriplot<-function(data,cellid,rivid,terrain=FALSE, name='value',zratio=0,
     xlim<- range(x);
     ylim<-range(y)
     dhdx <- diff(Hlim) / min(diff(xlim),diff(ylim));
-    
-    zr <- 1;
-    if (dhdx < 1/2000 ) {
-        zr <-  round(1/2000/dhdx) ;
-       # warning('\n\tdh/dx = ',round(dhdx,digits=5),'.\tZ ratio > ', zr, ' is recommended');
-        if (zratio <= 0){
-            zr <- zr;
-        }else{
-            zr <- zratio;
-        }
-    }
-    z=z ;
+    z=z * 0;
     Hlim <- range(H)
     Hlen=max(diff(round(Hlim)),5);
     idd <- classify(seq(from=Hlim[1],to=Hlim[2], length.out=Hlen), H);
@@ -184,7 +92,6 @@ PIHM.3Dtriplot<-function(data,cellid,rivid,terrain=FALSE, name='value',zratio=0,
         bgplot3d( suppressWarnings ( image.plot( legend.only=TRUE, legend.args=list(text=vname), zlim=Hlim,col=colorlut) ) )#legend
     }else{
         bgplot3d( suppressWarnings ( image.plot( legend.only=TRUE, legend.args=list(text=vname), zlim=c(Hlim[1],Hlim[2]+0.1),col=colorlut) ) )#legend
-        zr=1
     }
 
     #axis3d('z')
@@ -204,10 +111,10 @@ PIHM.3Dtriplot<-function(data,cellid,rivid,terrain=FALSE, name='value',zratio=0,
         }
     }
     
-    PIHM.rivplot(shift=shift,zratio=zr);    #plot river network.
+    PIHM.rivplot(shift=shift);    #plot river network.
 
     if(!missing(rivid)){  #highlight the segments of rivid.
-        PIHM.rivplot(rivid=rivid,shift=shift+2,zratio=zr); 
+        PIHM.rivplot(rivid=rivid,shift=shift+2); 
     }
 
     title3d(title, col = 'blue')
@@ -225,8 +132,7 @@ PIHM.3Dtriplot<-function(data,cellid,rivid,terrain=FALSE, name='value',zratio=0,
     
 }
 
-PIHM.3Drivplot<-function(data,rivid,terrain=FALSE, zratio=1,dist=0,shift=1,color='blue',riv.ele){
-
+PIHM.rivplot<-function(data,rivid,terrain=FALSE,dist=0,shift=1,color='blue',riv.ele){
     mesh <- readmesh(bak=TRUE);
     riv <- readriv(bak=TRUE);
     msh <- mesh$mesh;
@@ -234,12 +140,11 @@ PIHM.3Drivplot<-function(data,rivid,terrain=FALSE, zratio=1,dist=0,shift=1,color
     #=====plot river segments==========
     seg <- riv$River$riv[,c('FROM','TO')]
     
-
     m <-nrow(seg)
     x=t(matrix(c(pts[seg[,1],2],pts[seg[,2],2]),m,2) );
     y=t(matrix(c(pts[seg[,1],3],pts[seg[,2],3]),m,2) );
     if(missing(riv.ele)){
-        z=t(matrix((pts[seg[,1],5]+pts[seg[,2],5])/2,m,2) )*zratio;
+        z=t(matrix((pts[seg[,1],5]+pts[seg[,2],5])/2,m,2) );
     }else{
         z=matrix(riv.ele,m,2);
     }
@@ -248,7 +153,7 @@ PIHM.3Drivplot<-function(data,rivid,terrain=FALSE, zratio=1,dist=0,shift=1,color
     }else{
         moveup=shift;
     }
-    
+    z=z*0; 
     z=z+moveup;
     rivord=t(matrix(riv$River$riv[,7],m,2));
     
@@ -269,17 +174,3 @@ PIHM.3Drivplot<-function(data,rivid,terrain=FALSE, zratio=1,dist=0,shift=1,color
 
 }
 
-PIHM.3Dclose <- function(){
-    if ( !x11.ready() ){
-        return(0)
-    }
-
-    l <- rgl.dev.list();
-    nl= length(l);
-    if ( nl>0 ) {
-        for (i in 1:nl ){
-            rgl.close();
-        }
-    }
-    return(nl);
-}

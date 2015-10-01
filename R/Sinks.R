@@ -29,6 +29,26 @@ checksinks <- function(bak=TRUE){
     return(list('sinkid'=sinkid,'highNaborBedid'=sbid));
 
 }
+
+getelev <- function(bak=TRUE){
+    mesh <- readmesh(bak=bak);
+    msh <- mesh$mesh;
+    pts <- mesh$points;
+    nabr<-mesh$mesh[,5:7]   #nabor or each cell.
+    node<-mesh$mesh[,2:4]    #vetex of each cell.
+    
+    xv       =cbind(pts[node[,1],2],pts[node[,2],2],pts[node[,3],2]); #end with v, means vertex of triangles.
+    yv       =cbind(pts[node[,1],3],pts[node[,2],3],pts[node[,3],3]);
+    zbedv    =cbind(pts[node[,1],4],pts[node[,2],4],pts[node[,3],4]);
+    zsurfv   =cbind(pts[node[,1],5],pts[node[,2],5],pts[node[,3],5]);
+    
+    xc      =rowMeans(xv);      #end of c, means centronid of the triangles.
+    yc      =rowMeans(yv);
+    zbedc   =rowMeans(zbedv);
+    zsurfc  =rowMeans(zsurfv);
+    return(zsurfc);
+    
+}
 check.meshsinks <- function(bak=TRUE,sinkfilter=0){
     mesh <- readmesh(bak=bak);
     msh <- mesh$mesh;

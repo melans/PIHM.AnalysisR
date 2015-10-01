@@ -16,45 +16,7 @@
 #================================================
 #================================================
 #================================================
-PIHM.path <- function(indir, outdir,pname,minfodir,resdir,ver ){
-    m=0;
-    if (nargs() <1){
-
-        cat("\nProject Name=\t")   ;
-        if( exists("projectname" ) )
-        { cat(projectname,"\n"); } 
-        else{ cat('MISSING\n');m=1}
-        cat("\nPIHM Version=\t")   ;
-        if( exists("pihmver" ) )
-        { cat(pihmver,"\n"); } 
-        else{ cat('MISSING\n');m=2}
-
-        
-        cat("\nInput folder of PIHM=\n\t") 
-        if( exists("inpath" ) ){ cat(inpath,"\n");} 
-        else {cat('MISSING\n');m=3 }
-
-        cat("\nOutput folder of PIHM=\n\t") 
-        if( exists("outpath" ) ){ cat(outpath,"\n");}
-        else {cat('MISSING\n');m=4}
-        
-        cat("\nInformation of PIHM input=\n\t") 
-        if( exists("ModelInfopath" ) ){ cat(ModelInfopath,"\n"); }
-        else {cat('MISSING\n');m=5}
-        
-        cat("\nOutput folder of Analysis Tool=\n\t") 
-        if( exists("Resultpath" ) ){ cat(Resultpath,"\n");} 
-        else {cat('MISSING\n'); m=6}
-        
-        if (m>0){
-            cat('\n');
-#            cat('function: PIHM.path(indir,outdir,pname,minfodir,resdir\n');
-#            cat('Example 1: PIHM.path(indir=\'input/example/\',output=\'output/example\',pname=\'example\') \n');
-#            cat('Example 2: PIHM.path(minfodir=\'~/ModelInfo/\',resdir=\'/AnalysisDir\' \n');
-#           cat('Example 3: PIHM.path(ver=2.0);            
-        }
-        return(0);
-    } 
+PIHM.path <- function(indir, outdir,pname,minfodir,resdir,ver){
     
     if (!missing(indir)){   
         assign("inpath",normalizePath(indir) , envir = .GlobalEnv)   #input of PIHM
@@ -73,7 +35,6 @@ PIHM.path <- function(indir, outdir,pname,minfodir,resdir,ver ){
     if (!missing(minfodir)){ 
         assign("ModelInfopath",minfodir , envir = .GlobalEnv)
     }else{
-        cat(inpath,'\n')
         assign("ModelInfopath",file.path(outpath,'ModelInfo') , envir = .GlobalEnv) #Information of Input files.
     }
     if (!missing(resdir)){ 
@@ -81,10 +42,13 @@ PIHM.path <- function(indir, outdir,pname,minfodir,resdir,ver ){
     }else{
         assign("Resultpath",file.path(outpath,'PIHMAnalysis') , envir = .GlobalEnv) #ResultPath for analysis.
     }
-    assign("outdirname",'PIHMAnalysis/' , envir = .GlobalEnv)
 
+    if( !file.exists(inpath) ){ dir.create(inpath)};
+    if( !file.exists(outpath) ){ dir.create(outpath)};
     if( !file.exists(ModelInfopath) ){ dir.create(ModelInfopath)};
     if( !file.exists(Resultpath) ){ dir.create(Resultpath)};
+
+    
     PIHMdir <- list(inpath,outpath,  projectname, ModelInfopath, Resultpath,pihmver);
     names(PIHMdir) <- as.character(c( 'inpath','outpath',  'projectname', 'ModelInfopath', 'Resultpath','version'));
     assign("PIHMdir", PIHMdir, envir = .GlobalEnv) 
@@ -116,7 +80,7 @@ PIHM <-function(indir, outdir,pname,ver){
     cat ("\n\t    Current version is PIHM-MF and PIHM v2.4");
     cat ("\n\n\n");
     Sys.setenv(TZ = "UTC")
-    
+   pihmver=2.4 
     loadinglib();
    .timefunc()
    if ( !exists('inpath') ) {
@@ -131,8 +95,8 @@ PIHM <-function(indir, outdir,pname,ver){
        }
    }else{ indir=inpath;}
 
-   if ( !exists('outpath') ) { 
-       if (missing(outdir) ){
+   if (missing(outdir) ){
+       if ( !exists('outpath') ) { 
            outdir <- readline(prompt="Path of output folder for PIHM(ENTER if same as above):\n");
            if (nchar(outdir)<=0){
                outdir <- indir
@@ -140,8 +104,11 @@ PIHM <-function(indir, outdir,pname,ver){
            while (!file.exists(outdir)  ) {
                outdir <- readline(prompt="Folder doesn't exist. Try again. \n path of input folder for PIHM:\n");
            }
+       }else{
+           outdir=outpath;
+        
        }
-   }else{ outdir=outpath;}
+    }
 
     if ( !exists('projectname') ) {
         if (missing(pname) ){
@@ -177,6 +144,7 @@ PIHM <-function(indir, outdir,pname,ver){
 
    PIHMdir <- PIHM.path(indir,outdir,pname,ver=ver)   
    PIHM.path();
+
 #    pihmin <- loadinput();
 #   assign("PIHMIN",pihmin , envir = .GlobalEnv)  
     cat ("\n\n");
@@ -227,4 +195,12 @@ PIHM.mode <- function(index, mode='analysis'){
         return result;
     }')
     assign('t2time', t2time,envir = .GlobalEnv) 
+}
+x11.ready <- function(){
+    a= capabilities();
+    if (a['X11']){
+        return(TRUE);
+    }else{
+        return(FALSE);
+    }
 }

@@ -15,72 +15,152 @@
 #' @examples  
 #' Q <- goQ(inpath="./", outpath="./", resultpath="./AnalysisResults/",ifplot=1, projectname=0,outlets=0)
 
-anaQ<-function(siteid) {
+anaQ<-function(rivid,siteid=getsiteid(), obsQ,ifP=FALSE,spinupyears=1,calibyears) {
     para<-readpara(TRUE);    
     start<-para[[which(grepl('^start',tolower(names(para))))]];
     end<-para[[which(grepl('^end',tolower(names(para))))]];
     dt <- para[[which(grepl('^rivflx1',tolower(names(para))))]];
-
-
+    riv=readriv(bak=TRUE);
+    if (missing(rivid)){
+    outlet=riv$River$outlets;
+    }else{
+        outlet=rivid
+    }
 #======1 hydrograh ==================    
-    q=goQ(if.plot=TRUE,if.update=FALSE,ifP=TRUE); #m/s
+    q=goQ(outlets=outlet,if.plot=TRUE,if.update=FALSE,ifP=ifP); #m/s
     qd=q*dt         #m^3/day
     t=time(q);
+    
+sut=as.POSIXct(paste(year(start)+spinupyears, '-01-01', sep='') )        #spin up peiod. 
+if (missing(calibyears)){
+    calibyears=round((year(t[length(t)])-year(sut) )/2 )
+    if (calibyears<1){
+        calibyears=1
+    }
+}
+    clt=as.POSIXct(paste(year(start)+spinupyears+calibyears, '-01-01', sep='') )
+
+    validyears=(year(t[length(t)])-year(clt) )
+    if (validyears<=0){
+        validyears=0
+    }
+
+
+
+  #  q9=goQ(if.plot=TRUE,if.update=FALSE,ifP=TRUE, Q.number=9); #m/s
 #======2 verse OBS ==================    
-    OBS<-readUSGSQ(siteid=siteid,sdate=as.character(start),edate=as.character(end));    
-    obs<-OBS[time(q)];
-    time(obs)=t;    
-    imgfile="Discharge_obv_mean.png" 
+
+    if (missing(obsQ)){
+        OBS<-readUSGSQ(siteid=siteid,sdate=as.character(start),edate=as.character(end));    
+    }else{
+        OBS<-obsQ
+    }
+    time(OBS)=as.POSIXct(time(OBS))
+    ct=t[t %in% time(OBS)]    #commont time btw obs and q.
+    #ct=ct[which(ct>=sut)];
+
+    
+    obs<-OBS[ct];
+    time(obs)=ct;    
+    imgfile="Discharge_obv_mean.png"
+
     pihm.hydroplot(obs,fn=imgfile,if.save=TRUE, FUN=mean, ylab= "Q", var.unit = "m3/s")
     
    #======2.2 daily ==================    
-    if (diff(range(year(t)))>=1) {
-    QvsO(q,obs,fn='Disch.vs.Obser_dailyy.png');
-    
-   #======2.2 monthly ==================   
-    qm<-apply.monthly(qd,FUN=sum);
-    obsm<-apply.monthly(obs*86400,FUN=sum);
+     QvsO(q[ct],obs[ct],fn='Disch.vs.Obser_daily.png');
+     imagecontrol(fn='Disch.FDC_daily.png')
+     xx=cbind(obs[ct],q[ct]);
+     colnames(xx)=c('Obs','Sim')
+     qfdc=fdc(xx,lQ.thr=0.1,hQ.thr=0.9,thr.shw=TRUE,col=c('blue','red'))
+     grid()
+     dev.off()
+     
+      #======2.2.1 monthly ==================   
+    if (diff(range(year(ct)))>=1) {
+        qm<-apply.monthly(qd[ct],FUN=sum);
+        obsm<-apply.monthly(obs[ct]*86400,FUN=sum);
 
-    QvsO(qm,obsm,fn='Disch.vs.Obser_monthly.png');
+        QvsO(qm,obsm,fn='Disch.vs.Obser_monthly.png');
     }
-#======3 Discharge Ratio ==================    
-     if ( exists('forc') ){
-    }else{
-        forc=readforc();
-    }
-    Pdata <- apply.daily(forc$PRCP$ts1 /1000, FUN=mean) * 86400; #mm to meter.
-    ptime=time(Pdata);
-    pt=round(ptime,'days');
-    Prcp=xts(Pdata,order.by=pt);
-    P=Prcp[t]     #precipitation    
-    Psum=sum(P);
-    iarea=readarea(bak=TRUE);
-    Qsum=sum(q)/sum(iarea) *86400 ;
-    Osum=sum(obs)/sum(iarea) *86400 ;
-    
-    qr=Qsum/Psum * 100;
-    or=Osum/Psum * 100;
-    message('Q/P=',round(qr,digits=2),'%\t', 'Obs/P=',round(or,digits=2),'%\n');
 
-    ret=c(qr,or);
-    names(ret)=c('Q/P','Obs/P')
-    return(ret);
+#======3 Warmup/ Calibration /Validation ==================    
+
+t0=t[which(t>=start & t<=sut)];
+t1=t[which(t>=sut & t<=clt)];
+if (length(t1)>365){
+    require(gplots);
+    t2=t[which(t>=clt & t<=end)];
+    tt=cbind(gof(q[t1],obs[t1]),gof(q[t2],obs[t2]) )
+    tt=tt[c('RMSE','NSE','R2'),]
+    colnames(tt)=c('Calibration','Validation');
+
+    fn=paste('Discharge_WCV.',spinupyears, '_',calibyears,'_',validyears,'.png',sep='')
+
+    imagecontrol(fn=fn, path=Resultpath)
+    plot(obs)
+
+    lines(q[t0],col='blue')
+    lines(q[t1],col='red')
+    lines(q[t2],col='green')
+    addtable2plot(ct[1],max(obs)*0.8,tt,display.rownames=TRUE,display.colnames=TRUE,hlines=TRUE)
+
+    dev.off();
+    #legend(c('Observation','Simulation(Spinup)','Simulation(Calibration)','Simulation(Vadilation)'),
+    #       col=c('black','blue','red','green'))
 }
-siteid <- function(){
+#======4 Discharge Ratio ==================    
+    if (ifP){
+        prcp=readprcp();
+        Pdata <- apply.daily(prcp/1000, FUN=mean) * 86400; #mm to meter.
+        ptime=time(Pdata);
+        pt=round(ptime,'days');
+        Prcp=xts(Pdata,order.by=pt);
+        iP=Prcp[ct]  #precipitation   
+        
+        
+        iP=matrix(colSums(Prcp[ct]),nrow=1)  #precipitation   
+        dim(iP)
+        
+        att=readatt(bak=TRUE);
+        iarea=readarea(bak=TRUE);
+        area=sum(iarea);
+        mid <- att[,which(grepl('^meteo',tolower(colnames(att))))];
+        P = sum( matRowMulti( t(as.matrix(iP[,mid]) ) , iarea) ) /area;
+        
+        Psum=sum(P);
+        Qsum=sum(q[ct])/sum(iarea) *86400 ;
+
+
+        Osum=sum(obs[ct])/sum(iarea) *86400 ;
+        
+        qr=Qsum/Psum * 100;
+        or=Osum/Psum * 100;
+        message('Q/P=',round(qr,digits=2),'%\t', 'Obs/P=',round(or,digits=2),'%\n');
+
+        ret=c(qr, or);
+        names(ret)=c('Q/P','Obs/P')
+        return(ret);
+    }else{
+        return(list('q'=q[ct],'oq'=obs[ct], 'ct'=ct));
+    }
+}
+
+
+getsiteid <- function(){
     id='unknow';
     if (grepl('^lc',projectname) ){
         id='01576754'
     }
     return(id)
 }
-QvsO <-function(q,obs,fn){
+QvsO <-function(q,obs,fn,path=Resultpath,holdon=FALSE){
     wd=40;
     ht=30;
-    
+     
     if (missing(fn)){
         fn='QvsObs.png'
     }
-    imgfile=file.path(Resultpath,fn)
+    imgfile=file.path(path,fn)
     if(grepl('png$',tolower(fn)) ){
         png(imgfile,units = 'cm',width=wd, height=ht, res = 100)
     } else if ( grepl('eps$',tolower(fn))){
@@ -89,9 +169,98 @@ QvsO <-function(q,obs,fn){
     else{
         png(imgfile,units = 'cm',width=wd, height=ht, res = 100)
     }
-    ggof(sim=q,obs=obs)
-    dev.off()
- 
+    sim=q;
+    ggof(sim=sim,obs=obs,col=c('red', 'blue'))
+    if (!holdon){
+        dev.off()
+    }
+}
+
+SepBaseFlow<-function(x, filter=0.925,pass=1, unit='', if.save=FALSE,name='X'){
+    bt=as.matrix( BaseflowSeparation( as.numeric(x) ,filter_parameter=filter, passes=pass), ncol=2) ;
+    q=cbind(as.matrix(x), bt)
+    t=time(x);
+    q=as.xts(q,order.by=t);
+
+    colnames(q)=c('Q','Q_Base','Q_Quick')
+
+
+    fn=paste('Q_',name,"_", 
+             as.character.Date(t[1],format='%Y%m%d'),"_", 
+             as.character.Date(t[length(t)],format='%Y%m%d'),"_",
+             'F',filter, 'P',pass
+             ,'.png', sep='');
+
+    if (if.save){
+    imagecontrol(fn=fn, path='./')
+    }
+    plot.zoo(q, screen=1, type='l' , lty = c(1, 3, 5), col = rainbow(3), xlab='Time', ylab=paste('Q', unit))
+    legend('right', c("Q", "Q_base", "Q_Quick"),
+                lty = c(1, 3, 5), col = rainbow(3))
+    mtext(side=3, paste('filter = ',filter, '\npass = ', pass))
+
+    grid()
+
+    if (if.save){
+        dev.off();
+    }
+    return(q);
+
+}
+
+
+Qratio <- function(q, area, col.names='Q/P', period='all'){
+    stop('not yet');
+    prcp=readprcp();
+    t=time(q);
+    Pdata <- apply.daily(prcp /1000, FUN=mean) * 86400; #mm to meter.
+    ptime=time(Pdata);
+    pt=round(ptime,'days');
+    Prcp=xts(Pdata,order.by=pt);
+    P=Prcp[t]     #precipitation    
+
+    if (grepl('year',tolower(period))){
+        func=pihm.yearly;   
+    } else {
+        func=pihm.wholeperiod;
+    }
+
+    Psum=func(P);
+
+    if (missing(area)){
+        iarea=readarea(bak=TRUE);
+        area=sum(iarea);
+    }
+    Qsum=matRowMulti(func(q,FUN=sum),1/area) *86400 ;
+    qr=matRowMulti(Qsum,1/Psum) * 100;
+    
+    ret=qr;
+    names(ret)=col.names;
+    return(ret);
+}
+lm_eqn <- function(x,y){
+    m <- lm(y ~ x);
+    eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
+         list(a = format(coef(m)[1], digits = 2), 
+              b = format(coef(m)[2], digits = 2), 
+             r2 = format(summary(m)$r.squared, digits = 3)))
+    eq[1]=paste('Y=',round(coef(m)[1],2), '+', round(coef(m)[2],2),'X',  sep='')
+    eq[2]=paste('R2=',format(summary(m)$r.squared, digits = 3), sep='')
+    return(eq)
+#    as.character(as.expression(eq));                 
+}
+
+LineFitQ <- function(q,oq){
+
+    x=as.numeric(q)
+    y=as.numeric(oq)
+    
+    plot(x,y,col='blue',asp=1)
+    abline(lm(x~y), asp=1)
+    grid()
+    eqn=lm_eqn(x,y)
+    
+    legend('top', legend=eqn, bg='transparent')
 
 }
 

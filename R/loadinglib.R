@@ -1,11 +1,11 @@
-loadinglib <- function(quiet=TRUE){
+loadinglib <- function(quiet=TRUE, 
         liblist=c(#'xts', #for time-series.
-            'geometry',# for ploting 3D.
-            'akima',
-            'hydroGOF',#good of fit for Hydrograph
+            'geometry'# for ploting 3D.
+           # ,'akima'
+            ,'hydroGOF'#good of fit for Hydrograph
             #'quantmod',
            # 'Rcpp', #for time_t to time.
-            'EGRET','dataRetrieval' #for downloading USGS data
+            #'EGRET'            ,'dataRetrieval' #for downloading USGS data
           #  ,'tripack'
             ,'rgl'
             ,'rgeos'
@@ -14,8 +14,9 @@ loadinglib <- function(quiet=TRUE){
             ,'EcoHydRology'
             ,'fields'
             ,'plotrix'
-            ); 
-  
+            ,'data.table'
+            )
+                    ){
     Sys.setenv(TZ = "UTC")
 
   for (i in 1:length(liblist)){
