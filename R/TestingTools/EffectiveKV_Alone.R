@@ -45,6 +45,8 @@ if(len_Resultpath < 1)
 }
 
 #############################################################
+my_y0s = c(0.001,0.01,0.1,1.0)
+
 
 Dinf=0.1
 
@@ -57,21 +59,11 @@ sd=1.4
 z=sd
 Yu=seq(0.1, z-Dinf, length.out=1000)
 
-y0=0.001
-fn=paste('KV_','sd',sd, 'af',af, 'y0',y0,'z',z,'.jpg', sep='')
-ke=KVs(ks=ks, km=km, alpha=alpha, beta=beta, af=af,Ysurf=y0, De=z, Yu=Yu, if.save=TRUE,fn=fn)
-
-y0=0.01
-fn=paste('KV_','sd',sd, 'af',af, 'y0',y0,'z',z,'.jpg', sep='')
-ke=KVs(ks=ks, km=km, alpha=alpha, beta=beta, af=af,Ysurf=y0, De=z, Yu=Yu, if.save=TRUE,fn=fn)
-
-y0=0.1
-fn=paste('KV_','sd',sd, 'af',af, 'y0',y0,'z',z,'.jpg', sep='')
-ke=KVs(ks=ks, km=km, alpha=alpha, beta=beta, af=af,Ysurf=y0, De=z, Yu=Yu, if.save=TRUE,fn=fn)
-
-y0=1
-fn=paste('KV_','sd',sd, 'af',af, 'y0',y0,'z',z,'.jpg', sep='')
-ke=KVs(ks=ks, km=km, alpha=alpha, beta=beta, af=af,Ysurf=y0, De=z, Yu=Yu, if.save=TRUE,fn=fn)
+for(y0 in my_y0s)
+{
+  fn=paste('KV_','sd',sd, 'af',af, 'y0',y0,'z',z,'.jpg', sep='')
+  ke=KVs(ks=ks, km=km, alpha=alpha, beta=beta, af=af,Ysurf=y0, De=z, Yu=Yu, if.save=TRUE,fn=fn)
+}
 
 #############################################################
 
@@ -86,21 +78,12 @@ sd=20
 z=sd
 Yu=seq(0.1, z-Dinf, length.out=1000)
 
-y0=0.001
-fn=paste('KV_','sd',sd, 'af',af, 'y0',y0,'z',z,'.jpg', sep='')
-ke=KVs(ks=ks, km=km, alpha=alpha, beta=beta, af=af,Ysurf=y0, De=z, Yu=Yu, if.save=TRUE,fn=fn)
-
-y0=0.01
-fn=paste('KV_','sd',sd, 'af',af, 'y0',y0,'z',z,'.jpg', sep='')
-ke=KVs(ks=ks, km=km, alpha=alpha, beta=beta, af=af,Ysurf=y0, De=z, Yu=Yu, if.save=TRUE,fn=fn)
-
-y0=0.1
-fn=paste('KV_','sd',sd, 'af',af, 'y0',y0,'z',z,'.jpg', sep='')
-ke=KVs(ks=ks, km=km, alpha=alpha, beta=beta, af=af,Ysurf=y0, De=z, Yu=Yu, if.save=TRUE,fn=fn)
-
-y0=1
-fn=paste('KV_','sd',sd, 'af',af, 'y0',y0,'z',z,'.jpg', sep='')
-ke=KVs(ks=ks, km=km, alpha=alpha, beta=beta, af=af,Ysurf=y0, De=z, Yu=Yu, if.save=TRUE,fn=fn)
+for(y0 in my_y0s)
+{
+  fn=paste('KV_','sd',sd, 'af',af, 'y0',y0,'z',z,'.jpg', sep='')
+  ke=KVs(ks=ks, km=km, alpha=alpha, beta=beta, af=af,Ysurf=y0, De=z, Yu=Yu, if.save=TRUE,fn=fn)
+}
 
 #############################################################
+
 
