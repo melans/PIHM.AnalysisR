@@ -1,0 +1,18 @@
+Notes for Windows Users
+Install default R from
+https://www.r-project.org/
+
+
+The following packages are needed
+
+install.packages("ggplot2")
+install.packages("geometry")
+install.packages("hydroGOF")
+install.packages("rgl")
+install.packages("rgeos")
+install.packages("hydroTSM")
+install.packages("lubridate")
+install.packages("EcoHydRology")
+install.packages("fields")
+install.packages("plotrix")
+install.packages("data.table")
