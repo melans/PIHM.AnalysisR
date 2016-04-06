@@ -56,7 +56,7 @@ PIHM.path <- function(indir, outdir,pname,minfodir,resdir,ver){
 }
 
 quickset <- function(pj){
-    fd=list.files('../../input',pattern=pj,full.names=TRUE);
+    fd=list.files('../../input',pattern=paste(pj,'$',sep=''),full.names=TRUE);
     if (length(fd)==1){
         inpath=fd;
     }
@@ -81,7 +81,6 @@ PIHM <-function(indir, outdir,pname,ver){
     cat ("\n\n\n");
     Sys.setenv(TZ = "UTC")
    pihmver=2.4 
-    loadinglib();
    .timefunc()
    if ( !exists('inpath') ) {
        if (missing(indir) && !exists('inapth')  ){
@@ -140,7 +139,7 @@ PIHM <-function(indir, outdir,pname,ver){
         MAX_THREADS=as.numeric(system('sysctl -n hw.ncpu',intern=TRUE))*2 
     }
      assign("MAX_THREADS",MAX_THREADS , envir = .GlobalEnv)
-
+    define.lc.colors()
 
    PIHMdir <- PIHM.path(indir,outdir,pname,ver=ver)   
    PIHM.path();
@@ -150,6 +149,7 @@ PIHM <-function(indir, outdir,pname,ver){
     cat ("\n\n");
     return(PIHMdir);
 }
+
 
 PIHM.mode <- function(index, mode='analysis'){
     str=c('calib',
@@ -204,3 +204,51 @@ x11.ready <- function(){
         return(FALSE);
     }
 }
+
+
+define.lc.colors <- function(if.plot=FALSE){
+    n=100;
+    colormap=colors();
+    nodata.color=colormap[450]
+    lc.colors=matrix(nodata.color,ncol=n); 
+    lc.names=matrix('na',ncol=n); 
+#    lc.colors=matrix('na',ncol=n); 
+    
+    
+    lc.colors[11 ] = colormap[ 26 ] ;  lc.names[11 ] 	=	' water'
+    lc.colors[12 ] = colormap[ 37 ] ;  lc.names[12 ] 	=	' ice'
+    lc.colors[21 ] = colormap[ 21 ] ;  lc.names[21 ] 	=	'open space '
+    lc.colors[22 ] = colormap[ 22 ] ;  lc.names[22 ] 	=	'low intensity delevloped'
+    lc.colors[23 ] = colormap[ 33 ] ;  lc.names[23 ] 	=	'medium intensity delevloped '
+    lc.colors[24 ] = colormap[ 36 ] ;  lc.names[24 ] 	=	'high intensity delevloped '
+    lc.colors[31 ] = colormap[ 17 ] ;  lc.names[31 ] 	=	'barren land '
+    lc.colors[41 ] = colormap[ 88 ] ;  lc.names[41 ] 	=	'deciduous forest '
+    lc.colors[42 ] = colormap[ 81 ] ;  lc.names[42 ] 	=	'evergreen forest '
+    lc.colors[43 ] = colormap[ 50 ] ;  lc.names[43 ] 	=	'mixed forest '
+    lc.colors[51 ] = colormap[ 41 ] ;  lc.names[51 ] 	=	'shrub '
+    lc.colors[52 ] = colormap[ 41 ] ;  lc.names[52 ] 	=	'shrub '
+    lc.colors[71 ] = colormap[ 105] ;  lc.names[71 ] 	=	'grassland '
+    lc.colors[81 ] = colormap[ 148] ;  lc.names[81 ] 	=	'pasture/hay '
+    lc.colors[82 ] = colormap[ 150] ;  lc.names[82 ] 	=	'Cultivated crops '
+    lc.colors[90 ] = colormap[ 44 ] ;  lc.names[90 ] 	=	'woody wetlands '
+    lc.colors[92 ] = colormap[ 60 ] ;  lc.names[92 ]   =	'wetlands '
+    lc.colors[95 ] = colormap[ 46 ] ;  lc.names[95 ] 	=	'emegent herbaceous wetlands '
+    
+     assign("lc.colors",lc.colors , envir = .GlobalEnv)
+
+    if(if.plot){
+        x=matrix(1:2,nrow=2,ncol=n)
+        y=t(matrix(1:n,ncol=2,nrow=n))
+        id=which(lc.colors!=nodata.color)
+        xid=which(lc.colors==nodata.color)
+        x[,xid]=NA
+        y[,xid]=NA
+        nid=length(id)
+        #matplot(x[,id],y[,id],type='l',col=lc.colors[id], lwd=2,lty=1)
+        plot(x=NULL, y=NULL, xlim=c(0, 2),  ylim=c(0,nid*2+1) ) 
+        
+        text(1,(1:nid)*2,paste(id, lc.names[id]), col=lc.colors[id])
+    }
+    
+}
+

@@ -104,10 +104,13 @@ minfo <- function(bak,mapplot=PIHM.triplot,if.plot=TRUE){
 #============ #============
 
 
-landcovertable <-function(bak=TRUE,class=FALSE, output=ModelInfopath)
+landcovertable <-function(bak=TRUE,class=FALSE, output=ModelInfopath, att)
 {
-    lc=readlc(bak=bak);
-    att=readatt(bak=bak);
+    #lc=readlc(bak=bak);
+    if (missing(att)){
+        att=readatt(bak=bak);
+    }
+    lc=att[,4];
    
     nlc=nrow(lc);
     ulc=sort(unique(att[,4]));

@@ -49,12 +49,22 @@ if (missing(calibyears)){
 
   #  q9=goQ(if.plot=TRUE,if.update=FALSE,ifP=TRUE, Q.number=9); #m/s
 #======2 verse OBS ==================    
-
+if.obs=FALSE;
     if (missing(obsQ)){
-        OBS<-readUSGSQ(siteid=siteid,sdate=as.character(start),edate=as.character(end));    
+        if(grepl('^unknow',tolower(siteid))){
+            if.obs=FALSE
+        }else{
+            OBS<-readUSGSQ(siteid=siteid,sdate=as.character(start),edate=as.character(end));    
+            if.obs=TRUE;
+        }
     }else{
         OBS<-obsQ
+        if.obs=TRUE;
     }
+if(!if.obs){
+    return(q)
+}
+
     time(OBS)=as.POSIXct(time(OBS))
     ct=t[t %in% time(OBS)]    #commont time btw obs and q.
     #ct=ct[which(ct>=sut)];
@@ -62,10 +72,10 @@ if (missing(calibyears)){
     
     obs<-OBS[ct];
     time(obs)=ct;    
+    ct=ct[which(ct>=sut)]
     imgfile="Discharge_obv_mean.png"
 
     pihm.hydroplot(obs,fn=imgfile,if.save=TRUE, FUN=mean, ylab= "Q", var.unit = "m3/s")
-    
    #======2.2 daily ==================    
      QvsO(q[ct],obs[ct],fn='Disch.vs.Obser_daily.png');
      imagecontrol(fn='Disch.FDC_daily.png')
@@ -75,15 +85,36 @@ if (missing(calibyears)){
      grid()
      dev.off()
      
+     LineFit(x=as.numeric(obs[ct]),y=as.numeric(q[ct]), fn='Disch.vs.Obser_daily_LineFit.png')
+
+ 
       #======2.2.1 monthly ==================   
     if (diff(range(year(ct)))>=1) {
-        qm<-apply.monthly(qd[ct],FUN=sum);
-        obsm<-apply.monthly(obs[ct]*86400,FUN=sum);
+        qm<-apply.monthly(q[ct],FUN=mean);
+        obsm<-apply.monthly(obs[ct],FUN=mean);
 
         QvsO(qm,obsm,fn='Disch.vs.Obser_monthly.png');
     }
+    LineFit(x=as.numeric(obsm),y=as.numeric(qm),if.save=TRUE,fn='Disch.vs.Obser_monthly_LineFit.png');
+         
+      #======2.2.2 weekly ==================   
+    if (diff(range(year(ct)))>=1) {
+       qw<-apply.weekly(q[ct],FUN=mean);
+        obsw<-apply.weekly(obs[ct],FUN=mean);
 
-#======3 Warmup/ Calibration /Validation ==================    
+        QvsO(qw,obsw,fn='Disch.vs.Obser_weekly.png');
+    }
+    LineFit(x=as.numeric(obsw),y=as.numeric(qw),if.save=TRUE,fn='Disch.vs.Obser_weekly_LineFit.png');
+
+#======3 Q vs OBS qqplot ==================    
+ #   imagecontrol(fn='Disch.vs.Obser_qqplot.png')
+ #   LineFit(x=as.numeric(obs[ct]),y=as.numeric(q[ct]), fn='Disch.vs.Obser_daily_FDC.png')
+  #  qqplot(x=as.numeric(obs[ct]),y=as.numeric(q[ct]), col='blue',log='xy')
+  #  abline(0,1,col='grey');
+  #  grid()
+    #dev.off()
+
+#======4 Warmup/ Calibration /Validation ==================    
 
 t0=t[which(t>=start & t<=sut)];
 t1=t[which(t>=sut & t<=clt)];
@@ -108,7 +139,7 @@ if (length(t1)>365){
     #legend(c('Observation','Simulation(Spinup)','Simulation(Calibration)','Simulation(Vadilation)'),
     #       col=c('black','blue','red','green'))
 }
-#======4 Discharge Ratio ==================    
+#======5 Discharge Ratio ==================    
     if (ifP){
         prcp=readprcp();
         Pdata <- apply.daily(prcp/1000, FUN=mean) * 86400; #mm to meter.
@@ -153,7 +184,7 @@ getsiteid <- function(){
     }
     return(id)
 }
-QvsO <-function(q,obs,fn,path=Resultpath,holdon=FALSE){
+QvsO <-function(q,obs,fn,path=Resultpath,holdon=FALSE, ylab='Q'){
     wd=40;
     ht=30;
      
@@ -170,7 +201,7 @@ QvsO <-function(q,obs,fn,path=Resultpath,holdon=FALSE){
         png(imgfile,units = 'cm',width=wd, height=ht, res = 100)
     }
     sim=q;
-    ggof(sim=sim,obs=obs,col=c('red', 'blue'))
+    ggof(sim=sim,obs=obs,col=c( 'blue','red'), ylab=ylab)
     if (!holdon){
         dev.off()
     }
@@ -250,17 +281,31 @@ lm_eqn <- function(x,y){
 #    as.character(as.expression(eq));                 
 }
 
-LineFitQ <- function(q,oq){
 
-    x=as.numeric(q)
-    y=as.numeric(oq)
+ObjFcnFDC <- function(q,oq, n=100){
+    qq=cbind(q,oq);
+    fv = fdc(qq)
+    perc=(0:(n-1))/n;
     
-    plot(x,y,col='blue',asp=1)
-    abline(lm(x~y), asp=1)
-    grid()
-    eqn=lm_eqn(x,y)
+    x=fv[,1]
+    d=qq[,1];
+    Q=numeric(n);
+    for (i in 1:n){
+        oid = which(x> perc[i])
+        Q[i]=max(d[oid])
+    }
+    Qs=Q;
     
-    legend('top', legend=eqn, bg='transparent')
+    x=fv[,2]
+    d=qq[,2];
+    Q=numeric(n);
+    for (i in 1:n){
+        oid = which(x> perc[i])
+        Q[i]=max(d[oid])
+    }
+    Qo=Q;
+    
+    CE= 1- (Qs-Qo)/(Qo)
+    
 
 }
-

@@ -14,15 +14,19 @@
 #' readriv()
 
 
-readriv <-function(bak=FALSE){
-    if (bak){
-        theFile <- list.files(path=outpath, pattern=paste(projectname,".",'riv.bak',sep=''),full.names=TRUE);
-        if (length(theFile)<=0){
-            warning('The riv file in input folder was read, instead of in output folder.\n');
+readriv <-function(bak=FALSE, file){
+    if (missing(file)){
+        if (bak){
+            theFile <- list.files(path=outpath, pattern=paste(projectname,".",'riv.bak',sep=''),full.names=TRUE);
+            if (length(theFile)<=0){
+                warning('The riv file in input folder was read, instead of in output folder.\n');
+                theFile <- list.files(path=inpath, pattern=paste(projectname,".",'riv$',sep=''),full.names=TRUE);
+            }   
+        }else{
             theFile <- list.files(path=inpath, pattern=paste(projectname,".",'riv$',sep=''),full.names=TRUE);
-        }   
+        }
     }else{
-        theFile <- list.files(path=inpath, pattern=paste(projectname,".",'riv$',sep=''),full.names=TRUE);
+        theFile = file
     }
 
     if (!file.exists(theFile)){

@@ -4,9 +4,9 @@
 #'  Current version is for PIHM-MF or PIHM v2.4;
 
 
-writeatt <-function(att,path=inpath){
+writeatt <-function(att,path=inpath, filename=paste(projectname,".",'att',sep='')){
     
-    theFile <- file.path(path, paste(projectname,".",'att',sep=''));
+    theFile <- file.path(path, filename);
     bakFile <- file.path(path, paste(projectname,".",'att.',as.character(Sys.time()),sep=''));
     file.copy(theFile,bakFile)
     file.create(file=theFile);
@@ -34,9 +34,10 @@ writecalib <- function(calib, newfilename){
 
 }
 
-writemesh <- function(mesh){
-    theFile <- file.path(inpath, paste(projectname,".",'mesh',sep=''));
-    bakFile <- file.path(inpath, paste(projectname,".",'mesh.',as.character(Sys.time()),'-',rnorm(1),sep=''));
+writemesh <- function(mesh,path=inpath, fn=paste(projectname,".",'mesh',sep='')){
+    theFile <- file.path(path, fn);
+   # bakFile <- file.path(path, paste(projectname,".",'mesh.',as.character(Sys.time()),'-',rnorm(1),sep=''));
+    bakFile = paste(theFile, as.character(Sys.time()),'-',rnorm(1),sep='');
     file.copy(theFile,bakFile)
     file.create(file=theFile);
     str = c(as.character(mesh$size[1]),colnames(mesh$mesh)[-1]);
@@ -53,8 +54,8 @@ writemesh <- function(mesh){
 
 }
 
-writeinit <- function(init){
-     theFile <- file.path(inpath, paste(projectname,".",'init',sep=''));
+writeinit <- function(init, fn=paste(projectname,".",'init',sep=''), path=inpath){
+     theFile <- file.path(path,fn );
     bakFile <- file.path(inpath, paste(projectname,".",'init.',as.character(Sys.time()),'-',rnorm(1),sep=''));
     file.copy(theFile,bakFile)
     file.create(file=theFile);

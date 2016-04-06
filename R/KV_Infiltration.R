@@ -1,9 +1,3 @@
-#
-ks=1 /86400 #m/day => m/s
-km=10 /86400  #m/day => m/s
-alpha= 2;
-beta=1.3
-
 EffectiveSat <- function(Yunsat,deficit){
     se = Yunsat/deficit;
     se[which(se>=1)]=1
@@ -29,7 +23,8 @@ satKfunc <- function(se, beta){
 }
 KVs <- function(Yu=seq(1, 5, length.out=1000), De=5, ks, km, alpha, beta,
                 af=0.01, Ysurf=0.01, if.save=FALSE,
-                fn=paste(projectname,'KV_eff.png',sep=''),if.plot=TRUE){
+                fn=paste(projectname,'KV_eff.png',sep=''),if.plot=TRUE,
+                newversion=TRUE,mpbeta=1.1){
     se= EffectiveSat( Yunsat=Yu, deficit=De)
     ns=length(se)
     if (ns>1){        
@@ -40,7 +35,7 @@ KVs <- function(Yu=seq(1, 5, length.out=1000), De=5, ks, km, alpha, beta,
         for(i in 1:length(se)){
             Grad[i] = UnsatGriadient(se=se[i], alpha=alpha,beta=beta, Ysurf=Ysurf)
             K[i]= EffKV(se=se[i], ks=ks, km=km, alpha=alpha, beta=beta, af=af,
-                        griadient=Grad[i])
+                        griadient=Grad[i], newversion=newversion,mpbeta=mpbeta)
             status[i]=macpore_status(se=se[i], ks=ks, km=km, alpha=alpha, beta=beta, af=af,
                         griadient=Grad[i])
 
@@ -48,7 +43,8 @@ KVs <- function(Yu=seq(1, 5, length.out=1000), De=5, ks, km, alpha, beta,
         }
     }else{
         Grad = UnsatGriadient(se=se, alpha=alpha,beta=beta, Ysurf=Ysurf)
-        K= EffKV(se=se, ks=ks, km=km, alpha=alpha, beta=beta, af=af, griadient=Grad)
+        K= EffKV(se=se, ks=ks, km=km, alpha=alpha, beta=beta, af=af,
+                 griadient=Grad,newversion=newversion,mpbeta=mpbeta)
     }
     
     q=Grad * K
@@ -90,23 +86,42 @@ KVs <- function(Yu=seq(1, 5, length.out=1000), De=5, ks, km, alpha, beta,
     return(ret)
 }
 
-EffKV <- function (se,ks, km, alpha, beta, af, griadient){
-    kf= (se)^0.5 * (-1+( 1- se^(beta/(beta-1))) ^  ((beta -1)/beta) )^2 ;
-
-    kk= km * af + ks * (1- af) * kf
-
-    if (se >0.98 ){
-        ke= kk
+EffKV <- function (se,ks, km, alpha, beta, af, griadient, newversion=TRUE,
+                   mpbeta=1.1){
+   # mpbeta = beta in VG eqn, for macropores
+    if(newversion){
+        kf= (se)^0.5 * (-1+( 1- se^(beta/(beta-1))) ^  ((beta -1)/beta) )^2 ;
+        
+        kfmp= (se)^0.5 * (-1+( 1- se^(mpbeta/(mpbeta-1))) ^  ((mpbeta -1)/mpbeta) )^2 
+        kmx=  ks * kf ;
+        kmp= km * kfmp;
+        ke= kmx * (1-af) + kmp * af ;
+        ids=which(ke<kmx);
+        ke[ids]=kmx[ids];
     }else{
-        if (griadient * kf * ks < 1 * ks *kf ){
-            ke= ks * kf
-        }else{           
-            if (griadient < kk / (ks * kf) ){
-                ke = km * af * se + ks * (1- af) * kf;
-            }else{
-                ke = kk;
-            }
-        }
+        kf= (se)^0.5 * (-1+( 1- se^(beta/(beta-1))) ^  ((beta -1)/beta) )^2 ;
+        mpbeta=beta
+        kfmp= (se)^0.5 * (-1+( 1- se^(mpbeta/(mpbeta-1))) ^  ((mpbeta -1)/mpbeta) )^2 
+        kmx=  ks * kf ;
+        kmp= km * kfmp;
+        ke= kmx * (1-af) + kmp * af ;
+        ids=which(ke<kmx);
+        ke[ids]=kmx[ids];
+#    kk= km * af + ks * (1- af) * kf
+#
+#    if (se >0.98 ){
+#        ke= kk
+#    }else{
+#        if (griadient * kf * ks < 1 * ks *kf ){
+#            ke= ks * kf
+#        }else{           
+#            if (griadient < kk / (ks * kf) ){
+#                ke = km * af * kf + ks * (1- af) * kf;
+#            }else{
+#                ke = kk;
+#            }
+#        }
+#    }
     }
     return(ke);
 }
@@ -121,7 +136,7 @@ macpore_status <- function (se,ks, km, alpha, beta, af, griadient){
         if (griadient * ks *kf < 1 * ks *kf){
             status=2
         }else{           
-            if (griadient < kk / (ks * kf) ){
+            if (ks*kf!=0 & griadient < kk / (ks * kf) ){
                 status=3
             }else{
                 status=4;
@@ -131,7 +146,7 @@ macpore_status <- function (se,ks, km, alpha, beta, af, griadient){
     return(status);
 }
 
-RechargeRate <- function(alpha, beta, Yu, Yg, ks,km, sd, af){
+InfiltrationRate <- function(alpha, beta, Yu, Yg, ks,km, sd, af,newversion=TRUE){
     Yg=9.9
     sd=10;
     Yu=sd-Yg
@@ -154,7 +169,7 @@ RechargeRate <- function(alpha, beta, Yu, Yg, ks,km, sd, af){
         de= sd-Yg;
         se=EffectiveSat(Yu, de);
         griadient = 0-VGt2h(se=se,alpha=alpha, beta=beta) / 0.1;
-        ke= EffKV(se=se, ks=ks, km=km, alpha=alpha, beta=beta, af=af,griadient=griadient);
+        ke= EffKV(se=se, ks=ks, km=km, alpha=alpha, beta=beta, af=af,griadient=griadient,newversion=newversion);
        # cat('se=',se,'\n');
         fx= (  ks*Yg + ke*de ) * (alpha * de - 2* (se^(1/(1-beta)-1 ) )^(1/beta) )
         fx= fx / (alpha * (de + Yg) ) ^2;

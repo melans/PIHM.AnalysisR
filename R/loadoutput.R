@@ -15,15 +15,16 @@
 #' @examples
 #' loadoutputQ(outpath,projectname,inpath)
 
-loadoutput <-function(extlist,reload=FALSE){
+loadoutput <-function(extlist,reload=FALSE, path=outpath, rdspath=outpath,
+                      rdsname=paste(projectname,"_out.RDS",sep="")){
 #   nargin <- nargs();
 #    if (nargin <1){
 #        cat("\nUsage:\n\t PIHMout <- loadoutput(outpath=\"./\",projectname)\n");
 #        cat("\n\n");
 #        return(0);
 #    }
-    rdsfile=file.path(outpath,paste(projectname,"_out.RData",sep=""));
-    fns=list.files(path=outpath,pattern=paste(projectname,'.*.dat',sep=''),full.names=TRUE)
+    rdsfile=file.path(rdspath,rdsname);
+    fns=list.files(path=path,pattern=paste(projectname,'.*.dat',sep=''),full.names=TRUE)
     tf = max(file.info(fns)[,'mtime'])  #max time tage of modification of .dat file
     tr = file.info(rdsfile)[,'mtime'] #time tag of rds file.
     if (missing(reload)){
@@ -44,21 +45,21 @@ loadoutput <-function(extlist,reload=FALSE){
             exts<-paste(projectname,'.',extlist,'.dat$',sep='')
             pattern=paste(exts,collapse='|')
             if (pihmver >2.3){
-                flist <- list.files(path=outpath,ignore.case = TRUE,pattern=pattern);
-                fpath <- list.files(path=outpath,ignore.case = TRUE,pattern=pattern, full.names = TRUE );
+                flist <- list.files(path=path,ignore.case = TRUE,pattern=pattern);
+                fpath <- list.files(path=path,ignore.case = TRUE,pattern=pattern, full.names = TRUE );
             }else{
-                flist <- list.files(path=outpath,ignore.case = TRUE,pattern=pattern );
-                fpath <- list.files(path=outpath,ignore.case = TRUE,pattern=pattern, full.names = TRUE );
+                flist <- list.files(path=path,ignore.case = TRUE,pattern=pattern );
+                fpath <- list.files(path=path,ignore.case = TRUE,pattern=pattern, full.names = TRUE );
             }
         }
         else{
             pattern=paste(projectname,'.*.dat$',sep='')
              if (pihmver >2.3){
-                flist <- list.files(path=outpath,ignore.case = TRUE,pattern=pattern);
-                fpath <- list.files(path=outpath,ignore.case = TRUE,pattern=pattern, full.names = TRUE );
+                flist <- list.files(path=path,ignore.case = TRUE,pattern=pattern);
+                fpath <- list.files(path=path,ignore.case = TRUE,pattern=pattern, full.names = TRUE );
             }else{
-                flist <- list.files(path=outpath,ignore.case = TRUE,pattern=pattern );
-                fpath <- list.files(path=outpath,ignore.case = TRUE,pattern=pattern, full.names = TRUE );
+                flist <- list.files(path=path,ignore.case = TRUE,pattern=pattern );
+                fpath <- list.files(path=path,ignore.case = TRUE,pattern=pattern, full.names = TRUE );
             } 
         }
         dataname <- substring(flist,nchar(projectname) + 2,nchar(flist) - 4)
@@ -67,8 +68,8 @@ loadoutput <-function(extlist,reload=FALSE){
         #out <- list("names"=dataname);  #Names of data;
         length(out) <- length(dataname);
         names(out) <- dataname;
-        mesh <- readmesh(bak=TRUE);
-        riv <- readriv(bak=TRUE); 
+        mesh <- readmesh(bak=TRUE, file=dir(path=path, pattern=paste(projectname, '.mesh.bak', sep=''), full.names=TRUE ) );
+        riv <- readriv(bak=TRUE, file=dir(path=path, pattern=paste(projectname, '.riv.bak', sep='') , full.names=TRUE ) ); 
         for( i in 1:length(fpath)){
             if (file.info(fpath[i])$size >0){
                 message(fpath[i]);
@@ -94,7 +95,20 @@ loadoutput <-function(extlist,reload=FALSE){
         
         saveRDS(out,file=rdsfile,compress=TRUE);
     }
-    assign('PIHMOUT', out,envir=.GlobalEnv);
+    valuenames=names(out)
+    if ('ET0' %in%  valuenames & 'ET1' %in%  valuenames & 'ET2' %in%  valuenames ){
+        out$ET=out$ET0+out$ET1+out$ET2
+    }
+    if ('FluxSub0' %in%  valuenames & 'FluxSub1' %in%  valuenames & 'FluxSub2' %in%  valuenames ){
+        out$FluxSub=out$FluxSub0+out$FluxSub1+out$FluxSub2
+    }
+    if ('FluxSurf0' %in%  valuenames & 'FluxSurf1' %in%  valuenames & 'FluxSurf2' %in%  valuenames ){
+        out$FluxSurf=out$FluxSurf0+out$FluxSurf1+out$FluxSurf2
+    }
+    if ('GW' %in%  valuenames & 'GW' %in%  valuenames ){
+        out$gu=out$GW+out$unsat
+    }
+        assign('PIHMOUT', out,envir=.GlobalEnv);
     return(out)
 }
 

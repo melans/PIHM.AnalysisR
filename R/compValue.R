@@ -74,10 +74,10 @@ comValue <- function (folder='./',pattern=paste(projectname,'.*',sep=''),ext,id=
         }    
         Vlist[[i]] <- V;
         imagecontrol(path=outdir,fn=pngfile[i],bg='transparent')    
-        tsRainbow <- rainbow(ncol(VV))
+        tsColors <- terrain.colors(ncol(VV))
         qlim=c(min(min(VV,na.rm=TRUE),min(oq,na.rm=TRUE) ),max(max(VV,na.rm=TRUE),max(oq,na.rm=TRUE)) );
         plot.zoo(y = VV, ylab = ext, main = paste(ext), ylim=qlim,
-        col = tsRainbow , screens = 1)
+        col = tsColors , screens = 1)
         if (if.obs){
             oq<-obs[time(V)];
             time(oq)=time(V);   
@@ -85,19 +85,19 @@ comValue <- function (folder='./',pattern=paste(projectname,'.*',sep=''),ext,id=
         }
         grid()
         # Set a legend in the upper left hand corner to match color to return series
-        #legend(x = "topright", legend = yname, lty = 1,col = tsRainbow)
+        #legend(x = "topright", legend = yname, lty = 1,col = tsColors)
         dev.off();
 
     }
     yname <- character(length(projdir));
     for(i in 1:length(projdir) ){
-        yname[i] <- substr(projdir[i],6,nchar(projdir[i]) );
+        yname[i] <- substr(projdir[i],nchar(projectname)+1,nchar(projdir[i]) );
     }
     names(Vlist) <- yname;
 
 
     Vsets <- as.zoo(do.call(cbind,Vlist));
-    tsRainbow <- rainbow(ncol(Vsets))
+    tsColors <- terrain.colors(ncol(Vsets))
   
 # Plot the overlayed series
 dir.create(outdir,showWarnings=FALSE,mode='0777');
@@ -110,23 +110,44 @@ if (if.obs){
     qlim=range(Vsets,na.rm=TRUE)
 }
 plot(x = Vsets, ylab = ext, main = paste(ext,"comparison #",as.character(np)), ylim=qlim,
-        col = tsRainbow, screens = 1)
+        col = tsColors, screens = 1)
 
 if (if.obs){
     lines(obs,col=col,lwd=2,lty=3);
 }
 # Set a legend in the upper left hand corner to match color to return series
-legend(x = "topright", legend = yname, lty = 1,col = tsRainbow)
+legend(x = "topright", legend = yname, lty = 1,col = tsColors)
  grid()
 
 dev.off();
   return(Vsets);
 } 
 
+comSensitivity <- function(path='./',reload=TRUE, skipyear=2,years=9999){
+        trials <- readtrial();
+siteid=getsiteid();
+      para<-readpara('FALSE');    
+            start<-para[[which(grepl('^start',tolower(names(para))))]];
+            end<-para[[which(grepl('^end',tolower(names(para))))]];
 
+            obs <-readUSGSQ(siteid=siteid,sdate=as.character(start),edate=as.character(end));
+            obs <- obs[!is.na(obs)];
 
-comQ <- function (folder='./',pattern=paste(projectname,'.*',sep=''),obs,projdir,reload=FALSE,id,skipyear=0){
+    intrials = unlist(lapply(trials, function(x) length(x)))
+    idpara =which(intrials>1);   #id of parameters in sensitivity test
+    paranames= names(intrials[idpara])
+    npara =length(idpara) #number of parameters in sensitivity test.
+    pt=paste('*.',paranames,'=*',sep='');
+    for(i in 1:npara){ 
+        ret=comQ(folder=path,pattern=pt[i],obs=obs,
+                 reload=reload,skipyear=skipyear,years=years)
+    }
 
+}
+
+comQ <- function
+(folder='./',pattern=paste(projectname,'.*',sep=''),obs,projdir,reload=FALSE,id,skipyear=0,years=99999){
+ptstr=gsub('\\*|\\.|=','',pattern)
 #    pattern='lc.150617*';
     if.obs=FALSE
     ext='rivFlx1'
@@ -141,8 +162,11 @@ comQ <- function (folder='./',pattern=paste(projectname,'.*',sep=''),obs,projdir
             obs <-readUSGSQ(siteid=siteid,sdate=as.character(start),edate=as.character(end));
             obs <- obs[!is.na(obs)];
         if.obs=TRUE
+        }else{
+            if.obs=FALSE
         }
     }else{
+        if.obs=TRUE
     }
     if (missing(projdir)){     
         projlist <- dir( path = folder, pattern = pattern,full.names=TRUE);
@@ -156,12 +180,21 @@ comQ <- function (folder='./',pattern=paste(projectname,'.*',sep=''),obs,projdir
         }
         projlist <- file.path(folder, projdir);
     }
+    gofnames=c('ME','MAE','MSE','RMSE','NRMSE',
+                    'PBIAS','RSR','rSD','NSE','mNSE',
+                    'rNSE','d','md','rd','cp',
+                    'r','R2','bR2','KGE','VE','PBfdc')
+    np <- length(projlist)
+    if(np<=0){
+        return(0)
+    }
     if(missing(id)){
         riv=readriv();
         id=riv$River$outlets
     }
     outdir <- file.path(folder,'ScnComparison/');
-    rdsfile=file.path(outdir,paste(projectname,"_Q_.RData",sep=""));
+    
+    rdsfile=file.path(outdir,paste(projectname,"_Q",ptstr,"_.RData",sep=""));
 #    outdir <- file.path(projlist,outdirname);
     dump<- lapply(outdir,function(x) if(!file.exists(x)) dir.create(path= x,showWarnings=FALSE,mode='0777') );
     pngfiles <- paste('Q','_',projdir,'.png',sep='');
@@ -169,8 +202,7 @@ comQ <- function (folder='./',pattern=paste(projectname,'.*',sep=''),obs,projdir
     col=rgb(0,0,0,alpha=0.7) 
 
     Qlist <- list();
-    np <- length(projlist)
-    gfactors=matrix(1,20,np)
+    gfactors=matrix(1,length(gofnames),np)
     if (file.exists(rdsfile) & !reload ){
         Qsets= readRDS(file=rdsfile)
         if (ncol(Qsets)==np){   #ncol matches
@@ -195,26 +227,40 @@ comQ <- function (folder='./',pattern=paste(projectname,'.*',sep=''),obs,projdir
         tq=time(Q);
         to=time(obs);
         ct=tq[tq %in% to]
+        sy=as.POSIXlt(ct[1]);
+        sy$year=sy$year+skipyear;
+        ct=ct[which(ct>=as.Date(sy))];
+        ey=as.POSIXlt(ct[1]);
+        ey$year=ey$year+years;
+        ct=ct[which(ct<as.Date(sy))];
+        
         if (if.obs & length(ct)>365){
-            oq<-obs[ct];
-            
-#            years=unique(year(time(oq)));
-#            days=matrix(365, length(years),1);
-#            days[which(leap_year(years))]=366;
-#            if(skipyear<1){
-#                dstart=round(skipyear*365)
-#            }else{
-#                dstart=sum(days[1:floor(skipyear)])+round( (skipyear-floor(skipyear))*365);
-#            }
-#            dend=length(oq);
-#            nskip=round(365*skipyear)
+                       oq<-obs[ct];
             
             oq=oq[ct];
             time(oq)=ct;
             Q=Q[ct];
             time(Q)=ct;
-            QvsO(q=Q,obs=oq,fn=pngfiles[i],path=outdir);
-            gfactors[,i]=gof(sim=Q, obs=oq)            
+            qvs=cbind(oq,Q);
+            imagecontrol(fn=pngfiles[i], path=outdir,wd=35,ht=50)
+             par(mfrow=c(2,1))
+           plot.zoo(qvs,col=c('red','blue'),screen=1); 
+#            ggof(sim=Q,obs=oq,col=c('red', 'blue'))
+            calib=as.matrix(readcalib(bak=TRUE,folder=projlist[i])$value) 
+           # QvsO(q=Q,obs=oq,fn=pngfiles[i],path=outdir,holdon=TRUE);
+            leglines = paste(rownames(calib),'=',calib)
+            legend('topleft',leglines,bg="transparent")
+          #  dev.off();
+
+            gfactors[1:20,i]=gof(sim=Q, obs=oq)   
+            gfactors[21,i]=pbiasfdc(sim=Q, obs=oq)  
+            leglines = paste(gofnames, '=', round(gfactors[,i],3))
+            legend("topright",  legend=leglines )#,inset=c(-0.2,0),)
+                   
+            colnames(qvs)=c('Observation',paste('Q',i));
+          #  imagecontrol(fn=fdcfiles[i], path=outdir);
+            qfdc=fdc(qvs,col=c('red','blue'))
+             
         }
     }
     if(reload){
@@ -222,7 +268,7 @@ comQ <- function (folder='./',pattern=paste(projectname,'.*',sep=''),obs,projdir
         for(i in 1:length(projdir) ){
             yname[i] <- substr(projdir[i],6,nchar(projdir[i]) );
         }
-        names(Qlist) <- yname;
+        names(Qlist) <- yname
 
 
         Qsets <- as.zoo(do.call(cbind,Qlist));
@@ -230,37 +276,60 @@ comQ <- function (folder='./',pattern=paste(projectname,'.*',sep=''),obs,projdir
     time(Qsets)=as.Date(time(Qsets))
         tq=time(Qsets);
         to=time(obs);
-        ct=tq[tq %in% to]                 
-    tsRainbow <- rainbow(ncol(Qsets))
+        ct=tq[tq %in% to]    
+        sy=as.POSIXlt(ct[1]);
+        sy$year=sy$year+skipyear;
+    ct=ct[which(ct>=as.Date(sy))];
+    tsColors <- terrain.colors(ncol(Qsets))
     oq<-obs[ct];
     #time(oq)=time(Qsets);  
+ Qmat=Qsets[ct];
  
 dir.create(outdir,showWarnings=FALSE,mode='0777');
-pngfile <- paste('Q','_','vs','.png',sep='')
 
-imagecontrol(path=outdir,fn=pngfile,bg='transparent')   
-
+pngfile <- paste('Q','_','vs',ptstr,'.png',sep='')
+imagecontrol(path=outdir,fn=pngfile,bg='white', wd=35,ht=25, res=200)    
 if (if.obs){
-    qlim=c(min(min(Qsets,na.rm=TRUE ),min(obs)),max(max(Qsets,na.rm=TRUE),max(obs)) )
+    qlim=c(min(min(Qmat,na.rm=TRUE),min(obs[ct])),max(max(Qmat,na.rm=TRUE),max(obs[ct])) )
 }else{
-    qlim=range(Qsets,na.rm=TRUE)
+    qlim=range(Qmat,na.rm=TRUE)
 }
 
-plot.zoo(y = Qsets, ylab = 'Discharge (m3/s)',xlab='time', main = paste('Q',"comparison #",as.character(np)), ylim=qlim, col = tsRainbow, screens = 1)
+plot.zoo(x = Qmat, ylab = 'Discharge (m3/s)',xlab='time', main = paste('Q',"comparison #",as.character(np), ptstr), ylim=qlim, col = tsColors, screens = 1)
 
 if (if.obs){
     lines(oq,col=col,lwd=2,lty=3);
 }
 # Set a legend in the upper left hand corner to match color to return series
-legend(x = "topright", legend = yname, lty = 1,col = tsRainbow)
+legend(x = "topright", legend = yname, lty = 1,col = tsColors,bg='transparent')
  grid()
 dev.off();
-rownames(gfactors)=c('ME','MAE','MSE','RMSE','NRMSE',
-                'PBIAS','RSR','rSD','NSE','mNSE',
-                'rNSE','d','md','rd','cp',
-                'r','R2','bR2','KGE','VE')
 
-Qsets=cbind(Qsets,as.zoo(oq))
+#===========
+pngfile <- paste('QRange','_','vs',ptstr,'.png',sep='')
+imagecontrol(path=outdir,fn=pngfile,bg='white', wd=35,ht=25, res=200)   
+y.low <- apply(Qmat,1,min,na.rm=TRUE)
+y.high <- apply(Qmat,1,max,na.rm=TRUE)
+y.mean <- apply(Qmat,1,mean,na.rm=TRUE)
+y.lim=range(c(y.low,y.high,obs));
+
+plot(ct,y.mean,type = 'l',ylim = y.lim, col='blue', ylab = 'Discharge (m3/s)', xlab = 'Time')
+#lines(ct,y.low, col = 'grey')
+#lines(ct, y.high, col = 'grey')
+polygon(cbind(ct, rev(ct)), cbind(y.high, rev(y.low)),
+col = "grey", border = NA)
+if (if.obs){
+    lines(ct,obs[ct], col='red')
+}
+lines(ct,y.mean,col='blue',type='l')
+# Set a legend in the upper left hand corner to match color to return series
+legend(x = "topright", legend = yname, lty = 1,col = tsColors,bg='transparent')
+ grid()
+dev.off();
+
+
+#rownames(gfactors)=gofnames;
+#Qsets=cbind(Qsets,as.zoo(oq))
 saveRDS(Qsets,file=rdsfile,compress=TRUE);
 ret=list('Qs'=Qsets,'gof'=gfactors,'dirnames'=projdir);
 return(ret);

@@ -28,7 +28,6 @@ pihm.plot <- function(x,fn='pihm.plot.png',if.save=TRUE,ylab='Y',xlab='X'){
 
 }
 plotzoo <- function(x,y, screen=1,color,format='png',fn='plotzoo.png', if.save=TRUE,ylab='',unit='', holdon=FALSE){
-      #  library(rgl)
     if (if.save && grepl('^png',tolower(format)) ){
         if(exists('Resultpath')){
             imgfile=file.path(Resultpath,fn)
@@ -109,7 +108,6 @@ pihm.matrixplot <- function(x, FUN,value.name='Value', maintitle=''){
 }
 
 pihm.hydroplot <- function(x, FUN,fn='HydroPlot.png', if.save=TRUE,ylab='Y',var.unit=''){
-      #  library(rgl)
     yr=year(x);
     period=diff(range(yr))
     
@@ -124,21 +122,6 @@ pihm.hydroplot <- function(x, FUN,fn='HydroPlot.png', if.save=TRUE,ylab='Y',var.
     }
 }
 
-imagecontrol <- function(fn, path=Resultpath,wd=25,ht=20, units="cm", res=160, bg='transparent'){
-pihm.dev.close()
-    imgfile=file.path(path,fn)
-    nc=nchar(fn);
-    
-    ftype=substr(fn,nc-2,nc);   #extension of file name, which will be cmd for next line.
-    if (grepl('jpg',tolower(ftype) )){
-        ftype='jpeg'
-    }
-    cmd=paste(ftype,"(imgfile,width=wd, height=ht,units=units, res=res, bg=bg)")
-        eval(parse(text=cmd)); 
-}
-
-
-
 pihm.barplot <- function(fn,data,col,ylab='',title='',ylines,ycolor='red'){
     imagecontrol(fn=fn );    
     nc=ncol(data);
@@ -152,12 +135,7 @@ pihm.barplot <- function(fn,data,col,ylab='',title='',ylines,ycolor='red'){
     }
     dev.off();
 }
-pihm.dev.close <- function(){
-    dl <- dev.list();
-    nd = length(dl)
-    if (nd >0){
-        for(i in 1:nd){
-            dev.off();
-        }
-    }
-}
+
+
+
+

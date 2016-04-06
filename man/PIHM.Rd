@@ -2,15 +2,22 @@
 % Please edit documentation in R/PIHM.R
 \name{PIHM}
 \alias{PIHM}
-\title{A Cat Function}
+\title{PIHM Analysis project.
+Developed by Lele Shu( lele.shu at gmail.com  lzs157 at psu.edu )}
 \usage{
 PIHM(param = TRUE)
 }
 \arguments{
-\item{Love}{PIHM ?Defaults to TRUE.}
+\item{Love}{PIHM? Defaults to TRUE.}
 }
 \description{
-This function allows you to express your love of cats.
+=============================================
+ Current version is for PIHM-MF or PIHM v2.4;
+}
+\details{
+
+
+=============================================
 }
 \examples{
 PIHM()

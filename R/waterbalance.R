@@ -3,7 +3,7 @@
 #' Created by  Thu Apr 16 09:49:53 EDT 2015
 #'  Current version is for PIHM-MF or PIHM v2.4;
 
-wb <- function(pihmout, period='yearly',if.drawmap=FALSE){
+waterbalance <- function(pihmout, period='yearly',if.drawmap=FALSE, spinupyears=0,truncateyears=1){
 #     extlist=c('ET0','ET1','ET2',    #   et  
 #              'GW','unsat','snow','surf','IS',  #storage
 #              'rivStage','rivGW',   #storage in River
@@ -21,6 +21,16 @@ wb <- function(pihmout, period='yearly',if.drawmap=FALSE){
         PIHMOUT <- loadoutput();
         assign('PIHMOUT', PIHMOUT,envir=.GlobalEnv);
     }
+    outnames=names(PIHMOUT)
+    if('FluxSub0' %in% outnames | 'FluxSub1' %in% outnames |'FluxSub2' %in% outnames |
+      'Fluxsurf0' %in% outnames | 'Fluxsurf1' %in% outnames |'Fluxsurf2' %in% outnames | 
+      'ET0' %in% outnames | 'ET1' %in% outnames |'ET2' %in% outnames ){
+        warnings('Cannot calculate water balance on each cells, since some data is missing')
+        ifcells=FALSE
+    }else{
+        ifcells=TRUE
+    }
+    
     att <- readatt(bak=T);
     riv <- readriv(bak=T);
     outlets=riv$River$outlets;
@@ -36,7 +46,12 @@ wb <- function(pihmout, period='yearly',if.drawmap=FALSE){
     calib <- readcalib(bak=TRUE);
     
     t=PIHMOUT$CommonTime;
-    t=t[-length(t)];
+    sut=as.POSIXlt(paste(year(t[1])+spinupyears, '-01-01', sep='') )        #spin up peiod. 1 year to 2 year.
+    trt=as.POSIXlt(paste(year(t[length(t)])-truncateyears+1, '-01-01', sep='') )        #truancat peiod. .
+    
+    t=t[which(t>=sut & t<trt)];
+
+   # t=t[-length(t)];
     Q <- PIHMOUT$rivFlx1[t,outlets];
     if (grepl('^year',tolower(period))  ){
         pihm.period <- pihm.yearly
@@ -70,7 +85,6 @@ wb <- function(pihmout, period='yearly',if.drawmap=FALSE){
     RIVSTAGE <- PIHMOUT$rivStage[t];
     RIVGW <- PIHMOUT$rivGW[t];
     
-
     FLUXSURF<- (PIHMOUT$FluxSurf1[t]+PIHMOUT$FluxSurf2[t]+PIHMOUT$FluxSurf0[t])*86400
     FLUXSUB<-(PIHMOUT$FluxSub1[t]+PIHMOUT$FluxSub2[t]+PIHMOUT$FluxSub0[t])*86400
 

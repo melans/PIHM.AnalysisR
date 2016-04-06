@@ -75,6 +75,16 @@ pbsPIHM.calibration  <-
     #shnum -- number of shell files.
     # if.pbs --- if run the calibration on PBS. default=TRUE. 
     trials <- readtrial();
+    if(!quiet){
+        ntmp=unlist(lapply(trials,length))
+        print(ntmp)
+        message('\n\n',prod(ntmp),' trials are waiting for resources. \n')
+        message('Go on ? Yes/(No) ');
+       line <- readline()
+       if ( !grepl('^y', tolower(line)) ){
+           stop(' Abort. \n');
+       }
+    }
     calib <- readcalib(bak=FALSE);
     if (missing(RDSfile)){
         sets <- calibSets(trials, calib,keylist=keylist);
@@ -92,19 +102,20 @@ pbsPIHM.calibration  <-
     ish=1;
     il = 1; # control the line number of shlines.
     
-   message('\n\n',nsets,' trials are waiting for resources. \n', shnum,' shell file(',nlines,' lines each) will be genrated.\n');
-    if(!quiet){
-   message('Go on ? Yes/(No) ');
-   line <- readline()
-   if ( !grepl('^y', tolower(line)) ){
-       stop(' Abort. \n');
-   }
+     if(!quiet){
+        message('\n\n',nsets,' trials are waiting for resources. \n')
+        message( shnum,' shell file(',nlines,' lines each) will be genrated.\n');
+        message('Go on ? Yes/(No) ');
+       line <- readline()
+       if ( !grepl('^y', tolower(line)) ){
+           stop(' Abort. \n');
+       }
     }
    message('\n\nStart calibration processes\t',Sys.time(),'\n');
    pbslines=character(nsets);
     for(i in 1:nsets)       
     {  
-        num=formatC(i, width = round(log10(nsets)), format = "d", flag = "0")
+        num=formatC(i, width = ceiling(log10(nsets)), format = "d", flag = "0")
         fn=paste(projectname,'_',num,'.', strftime(Sys.time(),format='%y%m%d', tz='UTC'),sep='');
         calibfn=paste(fn,'.calib', sep='');
         calibpath=file.path(inpath, calibfn)
@@ -217,4 +228,44 @@ qstat <- function(option='' ){
     a=as.matrix(read.table(text=lines))
     colnames(a)=head
     return(a);
+}
+bestgof <- function( outdir='ScnComparison/',bestdir='best', copyfile=TRUE){
+    N=ncol(gfactors)
+    if (N>300){
+        num = 150
+    }else{
+        num = round(N/3)
+    }
+    nid = pickbest(key='NSE', decreasing=TRUE, numbers=num,bestdir='best', copyfile=FALSE)
+    pid = pickbest(key='PBfdc', decreasing=FALSE, numbers=num,bestdir='best', copyfile=FALSE)
+    bestid = pid [pid %in% nid]
+   
+    
+    if (copyfile && length(bestid)>0){
+        numbers=length(bestid)
+        nfiles=paste('BEST','_',(1:numbers), qffiles[bestid],sep='');
+        dir.create(bestdir,showWarnings=FALSE)
+        file.copy(paste(outdir, '/',qffiles[bestid],sep=''),
+                  paste(bestdir,'/',nfiles,sep=''))
+    }
+
+    return(bestid)
+}
+
+pickbest <- function(key='NSE', decreasing=TRUE, outdir='ScnComparison/',
+                     numbers=10,bestdir='best', copyfile=TRUE){
+    var = gfactors[key,]
+    if (   grepl('^PBfdc',key)   ){
+        bestid=orderdist(var)[1:numbers]
+    }else{
+        bestid = order(var,decreasing=decreasing)[1:numbers]
+    }
+    
+    if (copyfile){
+        nfiles=paste(key,'_',(1:numbers), qffiles[bestid],sep='');
+        dir.create(bestdir,showWarnings=FALSE)
+        file.copy(paste(outdir, '/',qffiles[bestid],sep=''),
+                  paste(bestdir,'/',nfiles,sep=''))
+    }
+    return(bestid)
 }

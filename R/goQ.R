@@ -16,8 +16,10 @@
 #' Q <- goQ(inpath="./", outpath="./", resultpath="./AnalysisResults/",ifplot=1, projectname=0,outlets=0)
 
 
-goQ <-function(outlets,if.plot=TRUE,if.update=TRUE,ifP=FALSE, Q.number=1){
+goQ <-function(outlets,if.plot=TRUE,if.update=TRUE,ifP=FALSE,
+               Q.number=1,if.river=TRUE){
         ext=paste('rivFlx',Q.number,sep='');
+if(if.river){
     if (exists('PIHMOUT')  & !if.update){
         q=PIHMOUT[[ext]];
     }else{
@@ -29,10 +31,38 @@ goQ <-function(outlets,if.plot=TRUE,if.update=TRUE,ifP=FALSE, Q.number=1){
     }
 
     Q <- q[,outlets];
-    
-    message("Load Q successfully, outlets=",outlets);
-    t=time(Q);
     nq=length(outlets);
+    message("Load Q successfully, outlets=",outlets);
+}else{
+    if (exists('PIHMOUT')  & !if.update){
+        q1=PIHMOUT[['FluxSurf0']]
+        q2=PIHMOUT[['FluxSurf1']]
+        q3=PIHMOUT[['FluxSurf2']]; 
+    }else{
+        q1=readout(ext='FluxSurf0',binary=TRUE);
+        q2=readout(ext='FluxSurf1',binary=TRUE);
+        q3=readout(ext='FluxSurf2',binary=TRUE);
+    }
+    q=abind(q1,q2,q3, along=3)
+    outmat=getoutlets(if.river=FALSE)
+    nq=nrow(outmat);
+    for( i in 1:nrow(outmat)){
+        
+        tmpQ<- q[,outmat[i,'CellID1'],outmat[i,'EdgeID1']]
+                +q[,outmat[i,'CellID2'],outmat[i,'EdgeID2']] ;
+        cn =paste(i,'_',outmat[i,'CellID1'],'.',outmat[i,'EdgeID1'],'_',outmat[i,'CellID2'],'.',outmat[i,'EdgeID2'],sep='');
+        colname=tmpQ();
+        if(i<=1){
+            Q=tmpQ;
+        }else{
+            Q=cbind(Q,tmpQ)
+        }
+    }
+    Q=as.xts(Q,order.by=time(q1))
+
+    message("Load Q successfully, outlets=",outmat);
+}
+    t=time(Q);
     yr=year(Q);
     period=diff(range(yr));
     fnhead=paste('Discharge',Q.number,sep='');

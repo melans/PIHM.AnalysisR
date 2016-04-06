@@ -34,20 +34,41 @@ return(pihmin)
 
 #============ #============
 #============ #============
-getoutlets <- function(){
+getoutlets <- function(if.river=T){
     riv=readriv();
-    return(riv$River$outlets)
+    if(if.river){
+        return(riv$River$outlets)
+    }
+    else{
+       
+        x=riv$River$outlets
+        nx=length(x)
+        pts=riv$River$riv[x,'TO']
+        msh=readmesh(bak=FALSE)$mesh;
+        mat=matrix(0, nx,5)
+        for (i in 1:nx){
+            noid = which(msh[,2]==pts[i] |msh[,3]==pts[i] |msh[,4]==pts[i])
+            nbid = which(     msh[,5]<=0 | msh[,6]<=0 | msh[,7]<=0   )
+            cellid = noid[which(noid %in% nbid)]
+            mat[i,1]=i
+            mat[i,2:3]=cellid
+            mat[i,4] = which(msh[cellid[1], 5:7] <=0)
+            mat[i,5] = which(msh[cellid[2], 5:7] <=0)           
+        }
+        colnames(mat)=c('ID','CellID1','CellID2','EdgeID1','EdgeID2')
+        return(mat)
+    }
 }
-readatt <-function(bak=FALSE){
+readatt <-function(bak=FALSE, attfile=paste(projectname,".",'att',sep='')){
     if (bak){
         theFile <- list.files(path=outpath, pattern=paste(projectname,".",'att.bak',sep=''),full.names=TRUE);
         if (length(theFile)<=0){
             warning('The att file in input folder was read, instead of in output folder.\n');
-            theFile <- list.files(path=inpath, pattern=paste(projectname,".",'att$',sep=''),full.names=TRUE);
+            theFile <- list.files(path=inpath, pattern=attfile,full.names=TRUE);
         }        
             
     }else{
-        theFile <- list.files(path=inpath, pattern=paste(projectname,".",'att$',sep=''),full.names=TRUE);
+        theFile <- list.files(path=inpath, pattern=paste(attfile,'$',sep=''),full.names=TRUE);
     }
 
     if (length(theFile)<=0){
@@ -174,7 +195,7 @@ if (pihmver >2.3){
     for(k in 1:length(lines) ){
         str <- scan(text=lines[k],what=character(),quiet = TRUE);
         keyword <- str[1];
-        if (grepl("^[[:digit:]]",str[2]) && nchar(str[2])<10 && !grepl("^#$",str[1]) ){
+        if (grepl("^[[:digit:]]",str[2]) && nchar(str[2])<20 && !grepl("^#$",str[1]) ){
 #            cat (i ,'\t',str,'\n')
             i=i+1;
             offon[i] <- TRUE
@@ -409,11 +430,11 @@ showmeKs <- function( calib.bak=FALSE,quiet=FALSE,path=Resultpath){
         
         if( !quiet){ 
             cat('\nK in soil/geol with calib, (m/s)\n');
-            print(last(Ksoil))
-            print(last(Kgeol))
+            print(Ksoil[nrow(Ksoil),] )
+            print(Kgeol[nrow(Kgeol),] )
             cat('\nK in soil/geol with calib, (m/s)\n');
-            print(last(cKsoil))
-            print(last(cKgeol))
+            print(cKsoil[nrow(cKsoil),] )
+            print(cKgeol[nrow(cKgeol),] )
             cat('\nK in riv, (m/s)\n');
             print(Krivm);
         #    print("K in soil\t=\t", last(Ksoil),' m/s\n');
@@ -552,11 +573,11 @@ Kd <- c(Kd,'Unit'='m/day');
 if(!quiet){
     cat('\n\nK in soil/geol without calib, (m/day)\n');
     for (i in 1:2){
-        print(  last(Kd[[i]])    );
+        print( Kd[[i]][nrow(Kd[[i]]),]     );
     }
     cat('\nK in soil/geol with calib, (m/day)\n');
     for (i in 3:4){
-        print(  last(Kd[[i]])    );
+        print( Kd[[i]][nrow(Kd[[i]]),]     );
     }
     cat('\nK in riv , (m/day)\n');
     print(  Kd[[5]]    );
@@ -579,16 +600,20 @@ showcalib <- function(bak=TRUE){
 
 #============ #============
 #============ #============
-readmesh <-function(bak=FALSE){
-    if(!bak){
-        meshfile <- file.path(inpath, paste(projectname,".mesh",sep=''));
-    }else{
-        meshfile <- file.path(outpath, paste(projectname,".mesh.bak",sep=''));
-        if(!file.exists(meshfile)){
-            warning('No .mesh file exists in ',outpath,'\n');
+readmesh <-function(bak=FALSE, file){
+    if(missing(file)){
+        if(!bak){
             meshfile <- file.path(inpath, paste(projectname,".mesh",sep=''));
-            #stop('No .mesh exists in folder ', outpath ,'\n');
+        }else{
+            meshfile <- file.path(outpath, paste(projectname,".mesh.bak",sep=''));
+            if(!file.exists(meshfile)){
+                warning('No .mesh file exists in ',outpath,'\n');
+                meshfile <- file.path(inpath, paste(projectname,".mesh",sep=''));
+                #stop('No .mesh exists in folder ', outpath ,'\n');
+            }
         }
+    }else{
+        meshfile =file
     }
     if (pihmver >=2.4 ){
         ncell=scan(meshfile,what=integer(),nmax=1,blank.lines.skip = TRUE,quiet = TRUE);
