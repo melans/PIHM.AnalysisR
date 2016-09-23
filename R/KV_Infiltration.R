@@ -53,7 +53,7 @@ KVs <- function(Yu=seq(1, 5, length.out=1000), De=5, ks, km, alpha, beta,
     if (ns >1 && if.plot){
         
         if (if.save){
-            imagecontrol(fn=fn, wd=25,ht=25)
+            image.control(fn=fn, wd=25,ht=25)
         }
         library(ggplot2)
 

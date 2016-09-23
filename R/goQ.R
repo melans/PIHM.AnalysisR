@@ -18,7 +18,10 @@
 
 goQ <-function(outlets,if.plot=TRUE,if.update=TRUE,ifP=FALSE,
                Q.number=1,if.river=TRUE){
-        ext=paste('rivFlx',Q.number,sep='');
+        ext=paste0('rivFlx',Q.number);
+    if (pihmver >=2.5){
+        ext=paste0('rivflx',Q.number);
+    }
 if(if.river){
     if (exists('PIHMOUT')  & !if.update){
         q=PIHMOUT[[ext]];
@@ -83,8 +86,8 @@ if(if.river){
 #            att=readatt(bak=TRUE);
 #            mid <- att[,which(grepl('^meteo',tolower(colnames(att))))];
             calib=readcalib(bak=TRUE);
-#            pdaily=rowSums(matRowMulti(ipd[,mid],iarea))/area * calib$value['PRCP'];
-        pdaily=dailyprcp() *  calib$value['PRCP'];
+#            pdaily=rowSums(matRowMulti(ipd[,mid],iarea))/area * calib['PRCP'];
+        pdaily=dailyprcp() *  calib['PRCP'];
 
             iarea=readarea();
             qq=Q/sum(iarea);

@@ -79,7 +79,7 @@ pihm.hydrograph <- function(flow,precip,fn='hydrograph.png',P.units = "H/T", S.u
     ftype=substr(fn,nc-2,nc);
 
 
-    imagecontrol(fn=fn);
+    image.control(fn=fn);
     if (nq==1){
     hydrograph(timeSeries=t,
                streamflow=as.numeric(Q),
@@ -97,7 +97,7 @@ pihm.hydrograph <- function(flow,precip,fn='hydrograph.png',P.units = "H/T", S.u
     }
     dev.off();
 }
-pihm.matrixplot <- function(x, FUN,value.name='Value', maintitle=''){
+pihm.matrixplot <- function(x, FUN=mean,value.name='Value', maintitle=''){
     m <- daily2monthly(x, FUN=FUN, na.rm=TRUE)
     M <- matrix(m, ncol=12, byrow=TRUE)
     colnames(M) <- month.abb
@@ -112,7 +112,9 @@ pihm.hydroplot <- function(x, FUN,fn='HydroPlot.png', if.save=TRUE,ylab='Y',var.
     period=diff(range(yr))
     
     if (period>1){
-        imagecontrol(fn=fn,path=Resultpath);    
+        if(if.save){
+        image.control(fn=fn,path=Resultpath);    
+        }
         hydroplot(x, FUN=FUN, ylab= ylab, var.unit = var.unit)
         if (if.save){
             dev.off();
@@ -123,7 +125,7 @@ pihm.hydroplot <- function(x, FUN,fn='HydroPlot.png', if.save=TRUE,ylab='Y',var.
 }
 
 pihm.barplot <- function(fn,data,col,ylab='',title='',ylines,ycolor='red'){
-    imagecontrol(fn=fn );    
+    image.control(fn=fn );    
     nc=ncol(data);
     if(missing(col)){
         col=rainbow(nc);

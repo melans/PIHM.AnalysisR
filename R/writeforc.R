@@ -17,8 +17,8 @@ writeforc20 <-function(x,path=inpath, filename=paste(projectname,".",'forc',sep=
 #        message('not ready');
 #    return(0);
 
-press=prcp*0;
-NumMeteoTS=length(colid)
+#press=prcp*0;
+NumMeteoTS=length(x[[1]])
 t1=as.POSIXct('2000-01-01')
 t2=as.POSIXct('2010-01-01')
 years=year(t1):year(t2)
@@ -27,7 +27,7 @@ years=year(t1):year(t2)
  	forcnames = c( "Precip", "Temp", "RH", "Wind", "RN", 
                    "G","VP", "LAI", "MF", "SS" )
     theFile <- file.path(path, filename);
-    bakFile <- file.path(path, paste(projectname,".",'forc.',as.character(Sys.time()),sep=''));
+    bakFile <- file.path(path, paste(filename,'.',as.character(Sys.time()),sep=''));
     file.copy(theFile,bakFile)
     
     file.create(file=theFile);
@@ -99,26 +99,44 @@ years=year(t1):year(t2)
 }
 
 writeforcmf <-function(x,path=inpath, filename=paste(projectname,".",'forc',sep='')){
-    message('not ready');
-    return(0);
-           Forcing<-list(
-                'PRCP'  =	prcp    ,
-                'SFCTMP'=	temp    ,
-                'RH'    =	rh  ,
-                'SFCSPD'=	winds   ,
-                'SOLAR' =	solar   ,
-                'LONGWV'=	longw   ,
-                'PRES'  =	press ,
-                'NumMeteoTS'=NumMeteoTS);
- 
     theFile <- file.path(path, filename);
-    bakFile <- file.path(path, paste(projectname,".",'forc.',as.character(Sys.time()),sep=''));
+    bakFile <- paste0(theFile,'.',as.character(Sys.time()))
     file.copy(theFile,bakFile)
-
     file.create(file=theFile);
-    
-    
-    
-    write.table(x=att,file=theFile,col.names=TRUE,row.names=FALSE,quote=FALSE)
+h1 =c('TIME','PRCP','SFCTMP','RH','SFCSPD','SOLAR','LONGWAVE','PRES')
+h2=c('TS','kg/m2/s','K','%','m/s','W/m2','W/m2','Pa')
+    #NumMeteoTS
+    str = c('NumMeteoTS', x$NumMeteoTS);
+    nsites = ncol (x$PRCP)
+    if (pihmver <2.5){
+        write.table(x=str,file=theFile,append=TRUE,col.names=FALSE,row.names=FALSE,quote=FALSE,eol = "\t");
+        write.table(x='',file=theFile,append=TRUE,col.names=FALSE,row.names=FALSE,quote=FALSE);  
+    }
+    for (i in 1:nsites){
+        message('Site ', i ,'/',nsites);
+        str = c('METEO_TS',i,'WIND_LVL',10);
+        write.table(x=str,file=theFile,append=TRUE,col.names=FALSE,row.names=FALSE,quote=FALSE,eol = "\t");   
+        write.table(x='',file=theFile,append=TRUE,col.names=FALSE,row.names=FALSE,quote=FALSE);  
+       str=h1 
+        write.table(x=str,file=theFile,append=TRUE,col.names=FALSE,row.names=FALSE,quote=FALSE,eol = "\t");   
+        write.table(x='',file=theFile,append=TRUE,col.names=FALSE,row.names=FALSE,quote=FALSE);  
+        str=h2
+        write.table(x=str,file=theFile,append=TRUE,col.names=FALSE,row.names=FALSE,quote=FALSE,eol = "\t");   
+        write.table(x='',file=theFile,append=TRUE,col.names=FALSE,row.names=FALSE,quote=FALSE);  
+        tm = strftime(time(x$PRCP[,i]),format='%Y-%m-%d %H:%M') 
+        data = data.frame(tm, x$PRCP[,i], x$SFCTMP[,i],x$RH[,i],x$SFCSPD[,i],x$SOLAR[,i], x$LONGWV[,i],x$PRES[,i])
+        
+        write.table(x=data,file=theFile,append=TRUE,col.names=FALSE,row.names=FALSE,quote=FALSE);   
+        write.table(x='',file=theFile,append=TRUE,col.names=FALSE,row.names=FALSE,quote=FALSE);  
+    }
+
+}
+
+writeforc <- function( x,path=inpath, filename=paste(projectname,".",'forc',sep='') ){ 
+    if (pihmver >2.2){
+        writeforcmf(x=x,path=path, filename=filename)
+    }else{
+        writeforc20(x=x,path=path, filename=filename)
+    }
 }
 

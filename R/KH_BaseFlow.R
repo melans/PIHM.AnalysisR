@@ -27,7 +27,7 @@ TestEffKHplot <- function( ks=1.2, km=4200, sd=10, Dm=1, af=0.01, path='./',if.p
    if (if.plot){
         if(if.save){
            fn=paste('K_eff','_ks=',ks,'km=',km,'sd=',sd,'Dm=',Dm,'af=',af,'.png');
-           imagecontrol(fn=fn, path=path);
+           image.control(fn=fn, path=path);
         }
         info= paste('ks=',ks,'\nkm=',km,'\nsd=',sd,'\nDm=',Dm,'\naf=',af);
         plot(K, Y, log='',type='l',xlab='Keff (L/T)', ylab='Water Table (L) ', lwd=5)
@@ -69,7 +69,7 @@ TestEffKH <- function( ks=1.2, km=4200, sd=10, Dm=1, af=0.01,path='./',if.plot=T
    if (if.plot){
         if(if.save){
            fn=paste('K_eff','_ks=',ks,'km=',km,'sd=',sd,'Dm=',Dm,'af=',af,'.png');
-           imagecontrol(fn=fn, path=path);
+           image.control(fn=fn, path=path);
         }
         info= paste('ks=',ks,'\nkm=',km,'\nsd=',sd,'\nDm=',Dm,'\naf=',af);
         plot(K, Y, log='',type='l',xlab='Keff (L/T)', ylab='Water Table (L) ', lwd=5)
@@ -114,7 +114,7 @@ EffKs <- function (ks, km, sd, Dm, af, path='./',if.plot=TRUE,if.save=FALSE){
     if (if.plot){
         if(if.save){
            fn=paste('K_eff','.png');
-           imagecontrol(fn=fn, path=path);
+           image.control(fn=fn, path=path);
         }
     
  #   macline=matrix(sd-Dm, nrow=ncol, nsd);
@@ -152,8 +152,8 @@ Ke <- function(path='./',if.plot=TRUE,if.save=FALSE,if.simple=TRUE){
         ssd=round(soildepth(),digits=3);
         sd=unique( range( ssd ) )
         geol=readgeol(bak=TRUE)
-        Dm=unique(range(geol[,10])) * calib$value['DMAC']
-        af=unique(range(geol[,8]))* calib$value['MACHF']
+        Dm=unique(range(geol[,10])) * calib['DMAC']
+        af=unique(range(geol[,8]))* calib['MACHF']
         
         if (length(sd)>1){
             sdq=seq(from=sd[1],to=sd[2],length.out=5)
@@ -171,8 +171,8 @@ Ke <- function(path='./',if.plot=TRUE,if.save=FALSE,if.simple=TRUE){
         ssd=round(soildepth(),digits=3);
         sd=unique( range( ssd ) )
         geol=readgeol(bak=TRUE)
-        Dm=unique(range(geol[,10])) * calib$value['DMAC']
-        af=unique(range(geol[,8]))* calib$value['MACHF']
+        Dm=unique(range(geol[,10])) * calib['DMAC']
+        af=unique(range(geol[,8]))* calib['MACHF']
         
         if (length(sd)>1){
             sdq=seq(from=sd[1],to=sd[2],length.out=5)

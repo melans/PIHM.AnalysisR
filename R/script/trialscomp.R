@@ -102,7 +102,7 @@ ngof=length(gofnames)
             Q=Q[ct];
             time(Q)=ct;
             qvs=cbind(oq,Q);
-            imagecontrol(fn=qffiles[i], path=outdir,wd=35,ht=50)
+            image.control(fn=qffiles[i], path=outdir,wd=35,ht=50)
              par(mfrow=c(2,1))
            plot.zoo(qvs,col=c('red','blue'),screen=1); 
 #            ggof(sim=Q,obs=oq,col=c('red', 'blue'))
@@ -119,7 +119,7 @@ ngof=length(gofnames)
             legend("topright",  legend=leglines )#,inset=c(-0.2,0),)
                    
             colnames(qvs)=c('Observation',paste('Q',i));
-          #  imagecontrol(fn=fdcfiles[i], path=outdir);
+          #  image.control(fn=fdcfiles[i], path=outdir);
             qfdc=fdc(qvs,col=c('red','blue'))
            
             
@@ -148,7 +148,7 @@ dir.create(outdir,showWarnings=FALSE,mode='0777');
 ptstr=gsub('\\*|\\.|=','',pattern)
 pngfile <- paste('Q','_','vs',ptstr,'.png',sep='')
 
-imagecontrol(path=outdir,fn=pngfile,bg='transparent')   
+image.control(path=outdir,fn=pngfile,bg='transparent')   
 
 if (if.obs){
     qlim=c(min(min(Qsets,na.rm=TRUE ),min(obs)),max(max(Qsets,na.rm=TRUE),max(obs)) )
@@ -193,13 +193,13 @@ tmpgof['PBfdc',]=abs(tmpgof['PBfdc',]); #absolute value of pbias fdc.
         bestid=which(thefactor>=bestf);
         cat(length(bestid), '@',bestid, '\n');
         idlist[[ifa]]=bestid;
-        imagecontrol(path=scnfolder,fn=paste(projectname,fact, '_vs_all.png',sep='') );
+        image.control(path=scnfolder,fn=paste(projectname,fact, '_vs_all.png',sep='') );
         #plot(thefactor,type='l',pch=2,lwd=2);grid();
         plot(thefactor);grid();
         dev.off()
         for (i in 1:length(vnames)){
             fn=paste(projectname,fact,'_vs_',vnames[i],'.png',sep='');
-            imagecontrol(path=scnfolder, fn=fn);
+            image.control(path=scnfolder, fn=fn);
             plot(mcalib[vnames[i],], thefactor, 
                  ylab=fact, 
                  xlab=paste('Mulitipler for', vnames[i] ));

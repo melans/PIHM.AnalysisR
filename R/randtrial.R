@@ -9,8 +9,8 @@
 #' @export  
 #' @examples
 
-readtrial <- function(){
-    theFile <- file.path(inpath, paste(projectname,".",'trial',sep=''));
+readtrial <- function(fn =paste(projectname,".",'trial',sep='') ){
+    theFile <- file.path(inpath, fn);
 
     if (!file.exists(theFile)){
         stop ("\n\n\n .trial file \'", theFile , "\' is missing\n\n");
@@ -58,7 +58,7 @@ calibSets <- function(trials, calib, keylist=list()) {
    # }
     onid <- which(calib$offon) ;
     names <- names(calib)
-    calib <- list(calib$value[onid],calib$offon[onid],calib$comments[onid]);
+    calib <- list(calib[onid],calib$offon[onid],calib$comments[onid]);
     names(calib) <- names
    
     
@@ -78,9 +78,9 @@ calibSets <- function(trials, calib, keylist=list()) {
     
     mattrial=unique(mattrial);
 
-    aname <- names(calib$value)
+    aname <- names(calib)
     bname <- names(trials);
-    cname <- union(names(calib$value),names(trials))
+    cname <- union(names(calib),names(trials))
     
     nlen <- length(cname);
     offon <- as.logical(1:nlen);
@@ -92,7 +92,7 @@ calibSets <- function(trials, calib, keylist=list()) {
         names(triline) <- bname;
         value <- numeric(nlen);
         names(value) <- cname;
-        value[aname] <- calib$value[aname] ;
+        value[aname] <- calib[aname] ;
         value[bname] <- triline[bname] ;
         calibSets[[i]] <- list('value' = value, 
                                'offon' = offon,

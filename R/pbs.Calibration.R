@@ -9,9 +9,12 @@
 #' @export  
 #' @examples
 pbsaset <-function(pj){
-    fd=list.files('../input',pattern=pj,full.names=TRUE);
+    fd=list.files('../input',pattern=paste0('^',pj,'$'),full.names=TRUE);
     if (length(fd)==1){
         inpath=fd;
+    } else {
+        print(fd)
+        stop('wrong projectname')
     }
     outpath='./'
     projectname=pj;
@@ -20,9 +23,12 @@ pbsaset <-function(pj){
     PIHM(indir=inpath,outdir=outpath,pname=projectname,ver=2.4)
 }
 pbsset <-function(pj){
-    fd=list.files('input',pattern=pj,full.names=TRUE);
+    fd=list.files('input',pattern=paste0('^',pj,'$'),full.names=TRUE);
     if (length(fd)==1){
         inpath=fd;
+    } else {
+        print(fd)
+        stop('wrong projectname')
     }
     outpath='./'
     projectname=pj;

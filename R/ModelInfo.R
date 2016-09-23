@@ -10,11 +10,11 @@ minfo <- function(bak,mapplot=PIHM.triplot,if.plot=TRUE){
     mesh=readmesh(bak=bak);
     riv=readriv(bak=bak);
     K=suppressWarnings(Kcalib(calib.bak=bak,path=ModelInfopath,quiet=TRUE) );
-    soil=readsoil(bak=FALSE);
-    geol=readgeol(bak=FALSE);
-    lc=readlc(bak=bak);
+    soil=readsoil(bak=FALSE)$soil;
+    geol=readgeol(bak=FALSE)$geol;
     att=readatt(bak=bak);
-   
+#    lc=readlc(bak=bak)
+    lc=att[,4]
     nm=mesh$size[1]
     np=mesh$size[2]
     nr=riv$River$size;
@@ -81,12 +81,12 @@ minfo <- function(bak,mapplot=PIHM.triplot,if.plot=TRUE){
 
     mapplot(data=soildepth(),fn=paste(projectname,'_Soil_Depth.png',sep=''),name='Soil depth(m)',title=paste('Soil depth of', projectname), path=path);
     
-    mapplot(data=soil[att[,2],2]*86400 * calib$value['KINF'] ,fn=paste(projectname,'_Kinf.png',sep=''),name='K infilration(m/day)',title=paste('Conductivity of Infiltration', projectname), path=path);
-    mapplot(data=geol[att[,3],2]*86400* calib$value['KSATH'] ,fn=paste(projectname,'_KH.png',sep=''),name='K Horizontal(m/day)',title=paste('Horizontal Conductivity of', projectname), path=path);
-    mapplot(data=geol[att[,3],3]*86400* calib$value['KSATV'] ,fn=paste(projectname,'_KV.png',sep=''),name='K Vertical(m/day)',title=paste('Vertical Conductivity of', projectname), path=path);
+    mapplot(data=soil$soil[att[,2],'INFK']*86400 * calib['KINF'] ,fn=paste(projectname,'_Kinf.png',sep=''),name='K infilration(m/day)',title=paste('Conductivity of Infiltration', projectname), path=path);
+    mapplot(data=geol$geol[att[,3],'SATHK']*86400* calib['KSATH'] ,fn=paste(projectname,'_KH.png',sep=''),name='K Horizontal(m/day)',title=paste('Horizontal Conductivity of', projectname), path=path);
+    mapplot(data=geol$geol[att[,3],'SATVK']*86400* calib['KSATV'] ,fn=paste(projectname,'_KV.png',sep=''),name='K Vertical(m/day)',title=paste('Vertical Conductivity of', projectname), path=path);
     
     #VegFrac
-    mapplot(data=lc[att[,4],2]* calib$value['VEGFRAC'] * 100 ,fn=paste(projectname,'_VegFrac.png',sep=''),name='VEGFRAC(%)',title=paste('Vegetation fraction of', projectname), path=path);
+    mapplot(data=lc[att[,4],2]* calib['VEGFRAC'] * 100 ,fn=paste(projectname,'_VegFrac.png',sep=''),name='VEGFRAC(%)',title=paste('Vegetation fraction of', projectname), path=path);
     #LAI max
     mapplot(data=lc[att[,4],9] ,fn=paste(projectname,'_LAI_max.png',sep=''),name='LAI max(m2/m2)',title=paste('Max LAI of', projectname), path=path);
     #Roughness
@@ -184,3 +184,50 @@ landcovertable <-function(bak=TRUE,class=FALSE, output=ModelInfopath, att)
     return(ret);
     
 }
+
+
+
+getelev <- function(bak=TRUE, bed =FALSE){
+    mesh <- readmesh(bak=bak);
+    msh <- mesh$mesh;
+    pts <- mesh$points;
+    nabr<-mesh$mesh[,5:7]   #nabor or each cell.
+    node<-mesh$mesh[,2:4]    #vetex of each cell.
+    
+    xv       =cbind(pts[node[,1],2],pts[node[,2],2],pts[node[,3],2]); #end with v, means vertex of triangles.
+    yv       =cbind(pts[node[,1],3],pts[node[,2],3],pts[node[,3],3]);
+    zbedv    =cbind(pts[node[,1],4],pts[node[,2],4],pts[node[,3],4]);
+    zsurfv   =cbind(pts[node[,1],5],pts[node[,2],5],pts[node[,3],5]);
+    
+    xc      =rowMeans(xv);      #end of c, means centronid of the triangles.
+    yc      =rowMeans(yv);
+    zbedc   =rowMeans(zbedv);
+    zsurfc  =rowMeans(zsurfv);
+    if ( !bed){
+        return(zsurfc);
+    }else{
+        return(zbedc); 
+    }
+    
+}
+
+soildepth <- function(bak=TRUE){ 
+    mesh <- readmesh(bak=bak);
+    msh <- mesh$mesh;
+    pts <- mesh$points;
+
+    nabr<-mesh$mesh[,5:7]   #nabor or each cell.
+    node<-mesh$mesh[,2:4]    #vetex of each cell.
+
+    
+    xv       =cbind(pts[node[,1],2],pts[node[,2],2],pts[node[,3],2]); #end with v, means vertex of triangles.
+    yv       =cbind(pts[node[,1],3],pts[node[,2],3],pts[node[,3],3]);
+    zbedv    =cbind(pts[node[,1],4],pts[node[,2],4],pts[node[,3],4]);
+    zsurfv   =cbind(pts[node[,1],5],pts[node[,2],5],pts[node[,3],5]);
+
+    
+    sd= rowMeans(zsurfv)-rowMeans(zbedv);
+    return(sd);
+}
+
+

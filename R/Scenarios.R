@@ -6,7 +6,7 @@
 
 
 AllScenarios <- function (inpath=inpath,folder,pattern,ext,id=0, obs, projdir){
-    pihm.dev.close()
+    image.off()
     PIHM.3Dclose();
     folder ='./';
 #    pattern='lc.150617*';
@@ -41,7 +41,7 @@ AllScenarios <- function (inpath=inpath,folder,pattern,ext,id=0, obs, projdir){
         scn[[i]]=out;
     }
     names(scn)=projdir;
-   pihm.dev.close()
+   image.off()
    PIHM.3Dclose();
    return(scn)
 }

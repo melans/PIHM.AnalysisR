@@ -9,7 +9,7 @@ image.control <- function(fn='image.png', path=Resultpath,wd=25,ht=20, units="cm
     if(!if.save){
         return(0)
     }
-    pihm.dev.close()
+    image.off()
     if( !file.exists(path) ){ dir.create(path)};
     imgfile=file.path(path,fn)
     nc=nchar(fn);
@@ -24,20 +24,13 @@ image.control <- function(fn='image.png', path=Resultpath,wd=25,ht=20, units="cm
 }
 image.off <- function(if.save=TRUE){
     if(if.save){
-        pihm.dev.close()
-    }
-}
-
-pihm.dev.close <- function(){
-    dl <- dev.list();
-    nd = length(dl)
-    if (nd >0){
-        for(i in 1:nd){
-            dev.off();
+        dl <- dev.list();
+        nd = length(dl)
+        if (nd >0){
+            for(i in 1:nd){
+                dev.off();
+            }
         }
     }
 }
-imagecontrol=image.control  #alias
-imageoff=image.off
-
 

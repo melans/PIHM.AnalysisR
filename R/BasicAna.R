@@ -64,7 +64,7 @@ BasicAna<-function(siteid,fgw, funsat,quiet=FALSE,period='yearly',obsQ, reload=F
 #            mid <- att[,which(grepl('^meteo',tolower(colnames(att))))];
 #    pdaily=rowSums(matRowMulti(ipd[,mid],iarea))/area;
     calib=readcalib(bak=TRUE);
-    pdaily=dailyprcp() *  calib$value['PRCP'];
+    pdaily=dailyprcp() *  calib['PRCP'];
  
     
             
@@ -120,7 +120,7 @@ BasicAna<-function(siteid,fgw, funsat,quiet=FALSE,period='yearly',obsQ, reload=F
     }   
     #========summary===================
     ret <- list('wb'=wb, 'ids'=ids, "Ks"=Ks, 'calib'=readcalib(bak=TRUE))
-    pihm.dev.close()
+    image.off()
     return(ret)
 
 }

@@ -20,7 +20,9 @@
 #' 
 
 
-datafilter <-function(data, filter,name='value',ylab='Value Name', unit='',is.riv=FALSE,if.plot=TRUE){
+datafilter <-function(data, filter,name=paste0(substitute(data),collapse=''),
+                      ylab=paste0(substitute(data),collapse='')
+                      , unit='',is.riv=FALSE,if.plot=TRUE){
     dataMin=sapply(data,min);
     dataMax=sapply(data,max);
 
@@ -30,7 +32,7 @@ datafilter <-function(data, filter,name='value',ylab='Value Name', unit='',is.ri
         segshp=riv$River$riv[,7]
         shp=riv$Shape$shp;
         calib=readcalib(bak=TRUE);
-        rd <- shp[segshp,2] * calib$value['RIV_DPTH'];
+        rd <- shp[segshp,2] * calib['RIV_DPTH'];
         
         ids=which(dataMax>rd);
         cat("\t",as.character(length(ids)), "item(s) are filtered from ",name," data.", "filter= Over Banks\n\n");
@@ -77,21 +79,22 @@ datafilter <-function(data, filter,name='value',ylab='Value Name', unit='',is.ri
                 for (i in 1:length(urd)){
                     lines(xx,c(urd[i],urd[i]),lwd=2);
                 }
-                dev.off();
             }
+                dev.off();
             if(is.riv){ # if ids is for rivers.
                 PIHM.triplot(rivid=ids,fn=paste(name,'_Overbank.png',sep=''),name=name,title=paste(name) );
             }else{  # ids is for Cells.
-                PIHM.triplot(cellid=ids,fn=paste(name,'+ELV',key,'.png',sep=''),name=name,title=paste(name,'filter=',key) );
+                PIHM.triplot(cellid=ids,fn=paste(name,'+ELV',key,'.png',sep=''),name=name,title=paste(name,'filter=',key),
+                             riveron=RIVERON);
             }
         }
     }
-   pihm.dev.close() 
+#   image.off() 
     return(ids)
 }
 
 
-datafilter.riv <-function(data, filter,name='rivvalue',ylab='riv Value Name', unit='',if.plot=TRUE){
+datafilter.riv <-function(data, filter,name=paste0(substitute(data),collapse=''),ylab=paste0(substitute(data),collapse=''), unit='',if.plot=TRUE){
     dataMin=sapply(data,min);
     dataMax=sapply(data,max);
 
@@ -101,7 +104,7 @@ datafilter.riv <-function(data, filter,name='rivvalue',ylab='riv Value Name', un
         segshp=riv$River$riv[,7]
         shp=riv$Shape$shp;
         calib=readcalib(bak=TRUE);
-        rd <- shp[segshp,2] * calib$value['RIV_DPTH'];
+        rd <- shp[segshp,2] * calib['RIV_DPTH'];
         
         ids=which(dataMax>rd);
         cat("\t",as.character(length(ids)), "river segment(s) are filtered from ",name," data.", "filter= Over Banks\n\n");
@@ -149,6 +152,6 @@ datafilter.riv <-function(data, filter,name='rivvalue',ylab='riv Value Name', un
             PIHM.triplot(rivid=ids,fn=paste(name,'_',key,'.png',sep=''),name=name,title=paste(name) );
          }
     }
-   pihm.dev.close() 
+   image.off() 
     return(ids)
 }

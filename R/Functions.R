@@ -3,7 +3,31 @@
 #'  <- ============================================
 #'  Current version is for PIHM 2.0 and above;
 
+Lon2tzN <-function( lon){
+    #from LONGITUDE to UTC+N zone. USA ONLY. 
+    ret = sign(lon) * ceiling( abs(lon/15) )
+    return(ret)
+}
+UTC2Local <- function (x, lon, ntz){
+    #from LONGITUDE to TIME zone. USA ONLY. 
+    if(missing(ntz)){
+        ntz = sign(lon) * ceiling( abs(lon/15) ) 
+    }
+    t=time(x) 
+    if (is.POSIXt(t)){
+        nt = t + 3600 * ntz
+        ret =x;
+        time(ret) = nt;   #new time assign.
+    }else{
+        ret=x
+    }
+    return(ret)
+}
+
+
+
 Eudist<-function(pt1,pt2){
+    #Eudist between two points(xi,yi)
     if (length(pt1)>2){
     x1=pt1[,1];
     x2=pt2[,1];
@@ -19,8 +43,15 @@ Eudist<-function(pt1,pt2){
     dist<- sqrt((x1-x2)^2+(y1-y2)^2);
     return(dist);
 }
-   
+  
+nmax <- function (x, n=1){
+    # find 1:Nth max value.
+    oid = order(x, decreasing = TRUE)
+    y = x[oid[1:n]]
+    return (y)
+}
 matRowMulti <-function(mat, vec){
+    #matrix multiplication by Row
     if(length(vec)!=ncol(mat)){
         stop('error of RowMulti,matrix is',dim(mat) ,'vector is',dim(vec),'\n');
     }
@@ -48,7 +79,8 @@ Normalize <- function(x){
     return( y);
 }
 
-a2d <- function(a,b,c){ 
+dms2d <- function(a,b,c){ 
+    #DMS to degree
     if (length(a)==3){
         return( a[1]+a[2]/60+a[3]/3600)
     }else{
@@ -57,31 +89,41 @@ a2d <- function(a,b,c){
 }
 
 LineFit <-function(x ,y, fn,path=Resultpath,if.save=TRUE, xlab='Observation',
-                   ylab='Simulation',log='xy'){
+                   ylab='Simulation',log='xy', if.fitline=TRUE, lim, pch=1,...){
     reg1 <- lm(x~y)       
 coe=coefficients(reg1)
 a=round(coe[2],2)
 b=round(coe[1],2)
-xloc=1/3*max(x,na.rm=TRUE);
-yloc=2/3*max(y,na.rm=TRUE);
 
     if (missing(fn)){
         fn='LineFit.png'
     }
-        imagecontrol(fn, path=path, wd=25,ht=25, if.save=if.save)
-   lim=range(c(x,y),na.rm=TRUE) 
-   lim[2]=round(lim[2], -log10(lim[2]))
-xloc=1/3*lim[2];
-yloc=2/3*lim[2];
 
+    image.control(fn, path=path, wd=15,ht=15, if.save=if.save)
+    if(missing(lim)){
+            lim=range(c(x,y),na.rm=TRUE) 
+    }
 
 plot(x, y,asp=1, xlab=xlab,ylab=ylab,log=log, xlim=lim,
-     ylim=lim,col='blue', pch=20)
-abline(b,a, col='red')
-abline(0,1,col='grey', lty=3,xlim=lim,ylim=lim)
+     ylim=lim,col='blue', pch=pch)
 grid()
-eqtext=bquote(italic(Y) == .(a) *italic(X) + .(b) ) 
-text(xloc,yloc, eqtext, cex = 1.2)  
+if (if.fitline){
+    xloc=1/3*lim[2];
+    yloc=2/3*lim[2];
+
+    abline(coe, col='red')
+    eqtext=bquote(italic(Y) == .(a) *italic(X) + .(b) ) 
+    text(xloc,yloc, eqtext, cex = 1.2)  
+}else{
+    dl.col = 'red'
+}
+
+
+if(!exists('dl.col',inherits = FALSE)){
+    dl.col='grey5'
+}
+
+abline(0,1,col=dl.col, lty=5,xlim=lim,ylim=lim)
 clip(0,max(x,na.rm=TRUE),0, max(y,na.rm=TRUE))
 
     if (if.save){
@@ -326,4 +368,41 @@ rep.col<-function(x,n){
     return(ret)
 }
 
+
+myfdc <- function(x, plot=TRUE, ylab='Value', xlab='Exceedance Probability (%)',
+                  col, lQ.thr=80, hQ.thr=10, xylog='xy', lwd=2, ylim, lty=1){
+x = as.matrix(x)
+m=nrow(x);
+n=ncol(x);
+
+p=matrix(0, nrow=m, ncol=n)
+y=p
+for (i in 1:n){
+    ord = order(x[,i],decreasing=TRUE);
+    p[,i]=100*(1:m)/(m+1)
+    y[,i]=sort(x[,i], decreasing=TRUE)
+}
+ret = list('x'=y, 'p'=p)
+if(plot){
+    if(missing('ylim') ){
+        ylim=round(range(y, na.rm=TRUE))
+        ylim[2]=ceiling(ylim[2]/10^(trunc(log10(ylim[2]))))*10^(trunc(log10(ylim[2])))
+        ylim[1]=floor(ylim[1])
+    }
+    if(missing('col')){
+        col=1:m;
+    }
+    matplot(p,y,type='l',
+            xlab = xlab, ylab = ylab,
+            col =col, log=xylog,lwd=lwd,lty=lty,
+            ylim = ylim, xaxt='n'
+            )
+    x.at=c(0.1, 1,2,5,10,20,50,100)
+    axis(side=1, at=x.at, label=x.at)
+    #lines(c(lQ.thr,lQ.thr), c(0,max(y)), col='grey', lty=2)
+    #lines(c(lQ.thr,lQ.thr), c(0,max(y)), col='grey', lty=2)
+    grid()
+}
+return(ret)
+}
 

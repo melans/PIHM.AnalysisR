@@ -135,7 +135,7 @@ waterbalance <- function(pihmout, period='yearly',if.drawmap=FALSE, spinupyears=
     ptime=time(Pdata);
     pt=round(ptime,'days');
     Prcp=xts(Pdata,order.by=pt);
-    P=Prcp[t] * calib$value['PRCP'];    #precipitation    
+    P=Prcp[t] * calib['PRCP'];    #precipitation    
 
     iPyr <- pihm.period(P,FUN=sum)
 
@@ -233,7 +233,7 @@ storageRiver <- function(H){
     riv<-readriv(bak=TRUE);
     calib<-readcalib(bak=TRUE);
     
-    sarea<-riv$surfArea * calib$value['RIV_WDTH'];
+    sarea<-riv$surfArea * calib['RIV_WDTH'];
     
     ma<-t(matrix(rep(sarea,nt),ncol=nt,nrow=riv$River$size ))
     

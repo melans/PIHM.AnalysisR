@@ -61,7 +61,7 @@ saveRDS(QFDC,file=paste(file,'QFDC.RDS'))
 
 
 
-imagecontrol(path='./', fn=file, wd=30, ht=25, res=100)
+image.control(path='./', fn=file, wd=30, ht=25, res=100)
 par(mfrow=c(length(tlist),length(plist)))
 col=c('green','blue','red')
 lty=c(2,1,3)

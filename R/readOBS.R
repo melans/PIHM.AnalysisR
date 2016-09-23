@@ -29,3 +29,4 @@ readUSGSQ <- function(siteid,sdate,edate){
     ts <- xts(as.numeric(daily[,'Q']),order.by=t);
     
 }
+

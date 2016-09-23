@@ -8,13 +8,13 @@
 #' =============================================
 #' @param  Path of output folder.
 #' @keywords read output
-#' @export  output data.
+#' @export  output dat.
 #' @examples
 #' PIHM()
 
-PIHM.AnimationMap<-function(data,range=0,dt=0,terrain=FALSE,name='value',zratio=0,dist=0,fn='2Dmap.png',path=Resultpath,title='map',colorFUN=terrain.colors,
-                     Hlim, colorreverse=FALSE , ngrids=200,riveron=TRUE,
-                     addcontour=FALSE, D3D=FALSE){
+PIHM.AnimationMap<-function(data,range=0,dt=0,terrain=FALSE,name=deparse(substitute(data)),zratio=0,dist=0,fn=paste0(name,'2Dmap.png'),path=Resultpath,title=name,colorFUN=terrain.colors,
+                     Hlim, colorreverse=FALSE , ngrids=200,riveron=RIVERON,
+                     gif=TRUE, addcontour=FALSE, D3D=FALSE){
 
     if(range[1] ==0){
         nt = nrow(data)
@@ -26,30 +26,39 @@ PIHM.AnimationMap<-function(data,range=0,dt=0,terrain=FALSE,name='value',zratio=
         if(dt <=0) dt=1;
     }
     ts = seq(from = 1, to=nt, by =dt) 
-    tstime= time(data)
-    Hlim=range(data,na.rm=TRUE)
+    dat =data[ts,]
+    tstime= time(dat)
+    Hlim=range(dat,na.rm=TRUE)
     if (terrain){
-        mesh <- readmesh(bak=TRUE);
-        riv <- readriv(bak=TRUE);
+        mesh <- readmesh(shp=FALSE, bak=TRUE);
         msh <- mesh$mesh;
         pts <- mesh$points;
         z=(pts[msh[,2],4]+pts[msh[,3],4]+pts[msh[,4],4])/3;
         Hlim = Hlim + range(z,na.rm=TRUE)
     }
-    for (i in ts){
+    fns = paste0(name,strftime(tstime, format='%Y%m%d'), '.png')
+    N=length(tstime)
+    for (i in 1:N){
         iname = paste(name,tstime[i]);
-        ifn= paste(name,tstime[i], '.png',sep='')
+        ifn= fns[i]
         message('file=',ifn);
         if(D3D){
-            PIHM.3Dmap(data[i,],terrain=terrain,name=iname,dist=dist,fn=ifn,path=path,title=title,colorFUN=colorFUN,
+            PIHM.3Dmap(dat[i,],terrain=terrain,name=iname,dist=dist,fn=ifn,path=path,title=title,colorFUN=colorFUN,
                            Hlim=Hlim, colorreverse=colorreverse ,
                            ngrids=ngrids,riveron=riveron);
 
         }else{
-            PIHM.mapraster(data[i,],terrain=terrain,name=iname,dist=dist,fn=ifn,path=path,title=title,colorFUN=colorFUN,
+            PIHM.mapraster(dat[i,],terrain=terrain,name=iname,dist=dist,fn=ifn,path=path,title=title,
+                           colorFUN=colorFUN,if.save=TRUE,
                        Hlim=Hlim, colorreverse=colorreverse ,
                        ngrids=ngrids,riveron=riveron,addcontour=addcontour);
         }
+    }
+    if(gif){
+    system (paste('convert -delay 50 -loop 0 ',
+              paste0(path, '/',paste0(name,'*.png')),
+              file.path(path, paste0(name, tstime[1],'_', tstime[N], ".gif") )
+              ) )  
     }
         
 }

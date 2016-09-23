@@ -16,8 +16,11 @@
 #================================================
 #================================================
 #================================================
-PIHM.path <- function(indir, outdir,pname,minfodir,resdir,ver){
-    
+PIHM.path <- function(indir, outdir,pname,minfodir,resdir,pihmver,
+                      LAKEON=TRUE, RIVERON=FALSE){
+        assign("RIVERON",RIVERON , envir = .GlobalEnv)   #default river network is on.
+        assign("LAKEON",LAKEON , envir = .GlobalEnv)   #default lake is off.
+ 
     if (!missing(indir)){   
         assign("inpath",normalizePath(indir) , envir = .GlobalEnv)   #input of PIHM
     }
@@ -28,9 +31,8 @@ PIHM.path <- function(indir, outdir,pname,minfodir,resdir,ver){
     if (!missing(pname)){
         assign("projectname",pname , envir = .GlobalEnv)
     }
-    if (!missing (ver) ){
-
-        assign("pihmver",ver , envir = .GlobalEnv)
+    if (!missing (pihmver) ){
+        assign("pihmver",pihmver , envir = .GlobalEnv)
     }
     if (!missing(minfodir)){ 
         assign("ModelInfopath",minfodir , envir = .GlobalEnv)
@@ -49,8 +51,14 @@ PIHM.path <- function(indir, outdir,pname,minfodir,resdir,ver){
     if( !file.exists(Resultpath) ){ dir.create(Resultpath)};
 
     
-    PIHMdir <- list(inpath,outpath,  projectname, ModelInfopath, Resultpath,pihmver);
-    names(PIHMdir) <- as.character(c( 'inpath','outpath',  'projectname', 'ModelInfopath', 'Resultpath','version'));
+    PIHMdir <- list('inpath'=inpath,
+                    'outpath'=outpath,
+                    'ModelInfopath'=ModelInfopath, 
+                    'Resuiltpath' =Resultpath,
+                    'projectname'=projectname,
+                    'pihmver' =pihmver,
+                    'RIVERON'=RIVERON,
+                    'LAKEON'=LAKEON);
     assign("PIHMdir", PIHMdir, envir = .GlobalEnv) 
     return(PIHMdir);
 }
@@ -64,10 +72,22 @@ quickset <- function(pj){
     projectname=pj;
     
     Sys.setenv(TZ = "UTC")
-    PIHM(indir=inpath,outdir=outpath,pname=projectname,ver=2.4)
+    PIHM(indir=inpath,outdir=outpath,pname=projectname,pihmver=2.4)
 }
  
-PIHM <-function(indir, outdir,pname,ver){
+quickset22 <- function(pj){
+    fd=list.files('./',pattern=paste(pj,'$',sep=''),full.names=TRUE);
+    if (length(fd)==1){
+        inpath=fd;
+    }
+    outpath='./'
+    projectname=pj;
+    
+    Sys.setenv(TZ = "UTC")
+    PIHM(inpath=inpath,outpath=outpath,projectname=projectname,pihmver=2.2)
+}
+
+PIHM <-function(inpath='input/', outpath='./',projectname,pihmver=2.2){
     cat ("\n\n");
     cat ("\n\t########  #### ##     ## ##     ##");
     cat ("\n\t##     ##  ##  ##     ## ###   ###"); 
@@ -80,74 +100,17 @@ PIHM <-function(indir, outdir,pname,ver){
     cat ("\n\t    Current version is PIHM-MF and PIHM v2.4");
     cat ("\n\n\n");
     Sys.setenv(TZ = "UTC")
-   pihmver=2.4 
+   pihmver=pihmver 
    .timefunc()
-   if ( !exists('inpath') ) {
-       if (missing(indir) && !exists('inapth')  ){
-           indir <- readline(prompt="Path of input folder for PIHM(ENTER = current word directory):\n");
-           while (nchar(indir)<=0 ) {
-               indir <- './' #readline(prompt="Wrong input. Let's try again.\n path of input folder for PIHM:\n");
-           }
-           while (!file.exists(indir)  ) {
-               indir <- readline(prompt="Folder doesn't exist. Try again. \n path of input folder for PIHM:\n");
-           }
-       }
-   }else{ indir=inpath;}
-
-   if (missing(outdir) ){
-       if ( !exists('outpath') ) { 
-           outdir <- readline(prompt="Path of output folder for PIHM(ENTER if same as above):\n");
-           if (nchar(outdir)<=0){
-               outdir <- indir
-           }
-           while (!file.exists(outdir)  ) {
-               outdir <- readline(prompt="Folder doesn't exist. Try again. \n path of input folder for PIHM:\n");
-           }
-       }else{
-           outdir=outpath;
-        
-       }
-    }
-
-    if ( !exists('projectname') ) {
-        if (missing(pname) ){
-            pname <- readline(prompt="Your project name plese:\n");
-            while (nchar(pname)<=0 ) {
-                pname <- readline(prompt="path of input folder for PIHM:\n");
-            }
-        }
-    }else{ pname=projectname;}
-
-    if ( !exists('pihmver') ) {
-        ver=2.4
-        if (missing(ver) ){
-            ver <- readline(prompt="Version of your PIHM(2.0, or 2.4(PIHM-MF). Default=2.4)\n");
-        }
-        
-        if (nchar(ver)<=0 ){
-            ver <- 2.4; 
-        }else {
-            if ( ver >2.4 || ver < 2.0) {
-                ver <- 2.4; 
-            }
-        }
-    }else{ ver=pihmver;}
-
     if ( exists('MAX_THREADS') ) {
         MAX_THREADS = MAX_THREADS
     }else{
         MAX_THREADS=as.numeric(system('sysctl -n hw.ncpu',intern=TRUE))*2 
     }
      assign("MAX_THREADS",MAX_THREADS , envir = .GlobalEnv)
-    define.lc.colors()
 
-   PIHMdir <- PIHM.path(indir,outdir,pname,ver=ver)   
-   PIHM.path();
-
-#    pihmin <- loadinput();
-#   assign("PIHMIN",pihmin , envir = .GlobalEnv)  
-    cat ("\n\n");
-    return(PIHMdir);
+   PIHMdir <- PIHM.path(inpath,outpath,projectname,pihmver=pihmver)   
+   return(PIHMdir)
 }
 
 
@@ -196,59 +159,16 @@ PIHM.mode <- function(index, mode='analysis'){
     }')
     assign('t2time', t2time,envir = .GlobalEnv) 
 }
-x11.ready <- function(){
-    a= capabilities();
-    if (a['X11']){
-        return(TRUE);
-    }else{
-        return(FALSE);
-    }
-}
+#x11.ready <- function(){
+#    a= capabilities();
+#    if (a['X11']){
+#        return(TRUE);
+#    }else{
+#        warning('X11 is not ready to use')
+#        print(a)
+#        return(FALSE);
+#    }
+#}
 
 
-define.lc.colors <- function(if.plot=FALSE){
-    n=100;
-    colormap=colors();
-    nodata.color=colormap[450]
-    lc.colors=matrix(nodata.color,ncol=n); 
-    lc.names=matrix('na',ncol=n); 
-#    lc.colors=matrix('na',ncol=n); 
-    
-    
-    lc.colors[11 ] = colormap[ 26 ] ;  lc.names[11 ] 	=	' water'
-    lc.colors[12 ] = colormap[ 37 ] ;  lc.names[12 ] 	=	' ice'
-    lc.colors[21 ] = colormap[ 21 ] ;  lc.names[21 ] 	=	'open space '
-    lc.colors[22 ] = colormap[ 22 ] ;  lc.names[22 ] 	=	'low intensity delevloped'
-    lc.colors[23 ] = colormap[ 33 ] ;  lc.names[23 ] 	=	'medium intensity delevloped '
-    lc.colors[24 ] = colormap[ 36 ] ;  lc.names[24 ] 	=	'high intensity delevloped '
-    lc.colors[31 ] = colormap[ 17 ] ;  lc.names[31 ] 	=	'barren land '
-    lc.colors[41 ] = colormap[ 88 ] ;  lc.names[41 ] 	=	'deciduous forest '
-    lc.colors[42 ] = colormap[ 81 ] ;  lc.names[42 ] 	=	'evergreen forest '
-    lc.colors[43 ] = colormap[ 50 ] ;  lc.names[43 ] 	=	'mixed forest '
-    lc.colors[51 ] = colormap[ 41 ] ;  lc.names[51 ] 	=	'shrub '
-    lc.colors[52 ] = colormap[ 41 ] ;  lc.names[52 ] 	=	'shrub '
-    lc.colors[71 ] = colormap[ 105] ;  lc.names[71 ] 	=	'grassland '
-    lc.colors[81 ] = colormap[ 148] ;  lc.names[81 ] 	=	'pasture/hay '
-    lc.colors[82 ] = colormap[ 150] ;  lc.names[82 ] 	=	'Cultivated crops '
-    lc.colors[90 ] = colormap[ 44 ] ;  lc.names[90 ] 	=	'woody wetlands '
-    lc.colors[92 ] = colormap[ 60 ] ;  lc.names[92 ]   =	'wetlands '
-    lc.colors[95 ] = colormap[ 46 ] ;  lc.names[95 ] 	=	'emegent herbaceous wetlands '
-    
-     assign("lc.colors",lc.colors , envir = .GlobalEnv)
-
-    if(if.plot){
-        x=matrix(1:2,nrow=2,ncol=n)
-        y=t(matrix(1:n,ncol=2,nrow=n))
-        id=which(lc.colors!=nodata.color)
-        xid=which(lc.colors==nodata.color)
-        x[,xid]=NA
-        y[,xid]=NA
-        nid=length(id)
-        #matplot(x[,id],y[,id],type='l',col=lc.colors[id], lwd=2,lty=1)
-        plot(x=NULL, y=NULL, xlim=c(0, 2),  ylim=c(0,nid*2+1) ) 
-        
-        text(1,(1:nid)*2,paste(id, lc.names[id]), col=lc.colors[id])
-    }
-    
-}
 

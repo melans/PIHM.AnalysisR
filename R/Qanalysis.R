@@ -27,7 +27,7 @@ anaQ<-function(rivid,siteid=getsiteid(), obsQ,ifP=FALSE,spinupyears=1,calibyears
         outlet=rivid
     }
 #======1 hydrograh ==================    
-    q=goQ(outlets=outlet,if.plot=TRUE,if.update=FALSE,ifP=ifP); #m/s
+    q=goQ(outlets=outlet,if.plot=TRUE,if.update=FALSE,ifP=ifP); #m^3/s
     qd=q*dt         #m^3/day
     t=time(q);
     
@@ -78,7 +78,7 @@ if(!if.obs){
     pihm.hydroplot(obs,fn=imgfile,if.save=TRUE, FUN=mean, ylab= "Q", var.unit = "m3/s")
    #======2.2 daily ==================    
      QvsO(q[ct],obs[ct],fn='Disch.vs.Obser_daily.png');
-     imagecontrol(fn='Disch.FDC_daily.png')
+     image.control(fn='Disch.FDC_daily.png')
      xx=cbind(obs[ct],q[ct]);
      colnames(xx)=c('Obs','Sim')
      qfdc=fdc(xx,lQ.thr=0.1,hQ.thr=0.9,thr.shw=TRUE,col=c('blue','red'))
@@ -107,7 +107,7 @@ if(!if.obs){
     LineFit(x=as.numeric(obsw),y=as.numeric(qw),if.save=TRUE,fn='Disch.vs.Obser_weekly_LineFit.png');
 
 #======3 Q vs OBS qqplot ==================    
- #   imagecontrol(fn='Disch.vs.Obser_qqplot.png')
+ #   image.control(fn='Disch.vs.Obser_qqplot.png')
  #   LineFit(x=as.numeric(obs[ct]),y=as.numeric(q[ct]), fn='Disch.vs.Obser_daily_FDC.png')
   #  qqplot(x=as.numeric(obs[ct]),y=as.numeric(q[ct]), col='blue',log='xy')
   #  abline(0,1,col='grey');
@@ -127,7 +127,7 @@ if (length(t1)>365){
 
     fn=paste('Discharge_WCV.',spinupyears, '_',calibyears,'_',validyears,'.png',sep='')
 
-    imagecontrol(fn=fn, path=Resultpath)
+    image.control(fn=fn, path=Resultpath)
     plot(obs)
 
     lines(q[t0],col='blue')
@@ -177,10 +177,11 @@ if (length(t1)>365){
 }
 
 
-getsiteid <- function(){
-    id='unknow';
-    if (grepl('^lc',projectname) ){
+getsiteid <- function(id=projectname){
+    if (grepl('^lc',id) ){
         id='01576754'
+    }else{
+        id='unknow';
     }
     return(id)
 }
@@ -223,7 +224,7 @@ SepBaseFlow<-function(x, filter=0.925,pass=1, unit='', if.save=FALSE,name='X'){
              ,'.png', sep='');
 
     if (if.save){
-    imagecontrol(fn=fn, path='./')
+    image.control(fn=fn, path='./')
     }
     plot.zoo(q, screen=1, type='l' , lty = c(1, 3, 5), col = rainbow(3), xlab='Time', ylab=paste('Q', unit))
     legend('right', c("Q", "Q_base", "Q_Quick"),

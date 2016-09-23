@@ -56,7 +56,7 @@ for (i in 1:n){
 }
 
 
-imagecontrol(path='./', fn=file, wd=30, ht=25, res=100)
+image.control(path='./', fn=file, wd=30, ht=25, res=100)
 
 par(mfrow=c(length(tlist),length(plist)))
 col=c('green','blue','red')
@@ -132,19 +132,22 @@ dev.off()
 
 Q0=readRDS('q0.RDS')
 Q1=readRDS('q1.RDS')
-
 Q2=readRDS('q2.RDS')
+
+att2=readatt(attfile='lc.att_Urban2')
+
+scnlog(att2=att2,Q0=Q0,Q1=Q1,Q2=Q2,file='scncompare2.png')
+
+
+scnlog(att2=att2,Q0=Q0,Q1=Q1,Q2=Q3,file='scncompare3.png')
+scnlog(att2=att2,Q0=Q0,Q1=Q1,Q2=Q4,file='scncompare4.png')
+
 Q2=Q2[-1,]
 Q3=readRDS('q3.RDS')
 Q4=readRDS('q4.RDS')
 Q20=readRDS('q20.RDS')
 Q30=readRDS('q30.RDS')
 Q40=readRDS('q40.RDS')
-att2=readatt(attfile='lc.att_Urban3')
-
-scnlog(att2=att2,Q0=Q0,Q1=Q1,Q2=Q2,file='scncompare2.png')
-scnlog(att2=att2,Q0=Q0,Q1=Q1,Q2=Q3,file='scncompare3.png')
-scnlog(att2=att2,Q0=Q0,Q1=Q1,Q2=Q4,file='scncompare4.png')
 scnlog(att2=att2,Q0=Q0,Q1=Q1,Q2=Q20,file='scncompare20.png')
 scnlog(att2=att2,Q0=Q0,Q1=Q1,Q2=Q30,file='scncompare30.png')
 scnlog(att2=att2,Q0=Q0,Q1=Q1,Q2=Q40,file='scncompare40.png')

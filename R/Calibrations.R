@@ -12,11 +12,11 @@ AssessRecessionCurve <- function(obs,q, sdate, edate){
     time(q)=time(obs);
     
     fn=paste('RecesionCurve',as.character(t[1]),'.png', sep='')
-    imagecontrol(fn=fn);
+    image.control(fn=fn);
     ggof(sim=q,obs=obs);
     dev.off();
     fn=paste('RecesionCurve_Normalized',as.character(t[1]),'.png', sep='')
-    imagecontrol(fn=fn);
+    image.control(fn=fn);
     ggof(sim=Normalize(q),obs=Normalize(obs));
     dev.off();
 }

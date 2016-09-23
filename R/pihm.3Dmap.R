@@ -12,15 +12,14 @@
 #' @examples
 #' PIHM()
  
-PIHM.3Dmap<-function(data,terrain=FALSE,name='value',zratio=0,dist=0,fn='3Dmap.png',path=Resultpath,title='map',heatmap=FALSE,colorFUN=terrain.colors,
-                     Hlim, colorreverse=FALSE , ngrids=200,riveron=TRUE){
+PIHM.3Dmap<-function(data= getelev(),terrain=FALSE,name=deparse(substitute(data)),
+                     zratio=0,dist=0,
+                     fn=paste0(deparse(substitute(data)), '.3Dmap.png'),path=Resultpath,title=name
+                     ,heatmap=FALSE,colorFUN=terrain.colors,
+                     Hlim, colorreverse=FALSE , ngrids=200,riveron=RIVERON){
     loadinglib(liblist=c('rgl'))
-    if ( !x11.ready() ){
-        return(0)
-    }
-
+    
     mesh <- readmesh(bak=TRUE);
-    riv <- readriv(bak=TRUE);
     msh <- mesh$mesh;
     pts <- mesh$points;
     x=(pts[msh[,2],2]+pts[msh[,3],2]+pts[msh[,4],2])/3;
@@ -108,7 +107,8 @@ PIHM.3Dmap<-function(data,terrain=FALSE,name='value',zratio=0,dist=0,fn='3Dmap.p
     
     title3d(title, col = 'blue')
     if(    riveron){
-    PIHM.3Drivplot(shift=dist,zr=zr);    #plot river network.
+        riv <- readriv(bak=TRUE);
+        PIHM.3Drivplot(shift=dist,zr=zr);    #plot river network.
     }
 
     rgl.viewpoint(0, 0)
@@ -124,16 +124,15 @@ PIHM.3Dmap<-function(data,terrain=FALSE,name='value',zratio=0,dist=0,fn='3Dmap.p
     return(diff(Hlim));
 }
 
-PIHM.3Dtriplot<-function(data,cellid,rivid,terrain=FALSE,
-                       name='value',fn='triplot.png',path=Resultpath,title='3Dtriangles',color='red',shift=1,colorFUN=terrain.colors,colormap,
-                       colorreverse=FALSE,Hlim, riveron=TRUE){
+PIHM.3Dtriplot<-function(data=getelev(),cellid,rivid,terrain=FALSE,
+                       name=deparse(substitute(data)),
+                       fn=paste0(deparse(substitute(data)), '.triplot.png'),path=Resultpath,
+                       title=deparse(substitute(data)),
+                       color='red',shift=1,colorFUN=terrain.colors,colormap,
+                       colorreverse=FALSE,Hlim, riveron=RIVERON,zr=1){
     loadinglib(liblist=c('rgl'))
     
-    if ( !x11.ready() ){
-        return(0)
-    }
-mesh <- readmesh(bak=TRUE);
-    riv <- readriv(bak=TRUE);
+mesh <- readmesh(bak=TRUE,shp=FALSE);
     msh <- mesh$mesh;
     pts <- mesh$points;
     tri <- msh[,2:4];
@@ -168,7 +167,7 @@ mesh <- readmesh(bak=TRUE);
     xlim<- range(x);
     ylim<-range(y)
     dhdx <- diff(Hlim) / min(diff(xlim),diff(ylim));
-    z=z * 0;
+    z=z * zr;
     Hlen=max(diff(round(Hlim)),10);
     idd <- classify(seq(from=Hlim[1],to=Hlim[2], length.out=Hlen), H);
     if (colorreverse){
@@ -229,7 +228,8 @@ mesh <- readmesh(bak=TRUE);
         }
     }
     if(    riveron){
-    PIHM.3Drivplot(shift=shift);    #plot river network.
+        riv <- readriv(bak=TRUE);
+        PIHM.3Drivplot(shift=shift,zr=zr);    #plot river network.
     }
     if(!missing(rivid)){  #highlight the segments of rivid.
         PIHM.3Drivplot(rivid=rivid,shift=shift+2, zr=zr); 
@@ -299,10 +299,6 @@ PIHM.3Drivplot<-function(data,rivid,terrain=FALSE,dist=0,shift=1,color='blue',ri
 PIHM.3Dclose <- function(){
     loadinglib(liblist=c('rgl'))
     
-    if ( !x11.ready() ){
-        return(0)
-    }
-
     l <- rgl.dev.list();
     nl= length(l);
     if ( nl>0 ) {

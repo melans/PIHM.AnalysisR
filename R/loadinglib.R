@@ -1,5 +1,6 @@
-loadinglib <- function(quiet=TRUE, 
-        liblist=c(#'xts', #for time-series.
+loadinglib <- function( 
+        liblist=c(
+                  'xts', #for time-series.
             'geometry'# for ploting 3D.
             ,'akima'
             ,'hydroGOF'#good of fit for Hydrograph
@@ -12,14 +13,16 @@ loadinglib <- function(quiet=TRUE,
             ,'hydroTSM'  #Hydro TS management.
             ,'lubridate'
             #,'EcoHydRology'
+            , 'lattice'       # for levelplot, image.plot
             ,'fields'
             ,'plotrix'
             ,'data.table'
             ,'sp'   #spatial data GIS
             ,'maptools' #map tool
             ,'raster'
-            )
-                    ){
+            , 'aod'
+            ),
+              quiet=TRUE      ){
     Sys.setenv(TZ = "UTC")
 
   for (i in 1:length(liblist)){
@@ -30,11 +33,12 @@ loadinglib <- function(quiet=TRUE,
           }
       } else {
           message("... \ttrying to install ",libname)
-          install.packages(libname, dep=TRUE,repos='http://cran.us.r-project.org')
+          install.packages(libname, repos='https://cran.cnr.berkeley.edu/')
+          require(libname)
           if(require(libname)){
               message(libname," installed and loaded.")
           } else {
-              stop("Could not install ",libname)
+              warning("Could not install ",libname)
           }
       }
   }
@@ -70,11 +74,11 @@ loadinglib.CC <- function(quiet=TRUE,
           }
       } else {
           message("... \ttrying to install ",libname)
-          install.packages(libname, dep=TRUE,repos='http://cran.us.r-project.org')
+          install.packages(libname, repos='http://cran.us.r-project.org')
           if(require(libname)){
               message(libname," installed and loaded.")
           } else {
-              stop("Could not install ",libname)
+              warning("Could not install ",libname)
           }
       }
   }

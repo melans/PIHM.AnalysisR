@@ -1,21 +1,19 @@
 #' PIHM Analysis project.
 #' Developed by Lele Shu( lele.shu at gmail.com  lzs157 at psu.edu ) 
-#' Created by Wed Apr 15 20:25:45 EDT 2015
+#' Created by Wed Apr 15 20:25:45 EDT 2015 
+#' Update at Fri Apr  8 14:46:12 EDT 2016
 #'  Current version is for PIHM-MF or PIHM v2.4;
+#' covert MF output to pihm v2.2
 #' 
-#' 
-#' @param  inpath
-#' @param  outpath 
-#' @param  resultpath  For saving image file.
-#' @param  ifplot  If plot and save image file. 
-#' @param  projectname 
-#' @param  outlets Outlets id(s).
-#' @keywords discharge, hydrograph
-#' @return Q, the discharge of outlets, type=TS.
+#' @param  data
+#' @param  name
+#' @keywords PIHM, MM-PIHM, PIHM-MF, PIHM2.0
+#' @return 
 #' @examples  
 
 
 mf22 <-function(data,name='unknow'){
+    #covert mf output to pihm v2.2
     outdir <- file.path(outpath, paste(projectname,'v2.2',sep=''));
     if (!file.exists(outdir) ){
         dir.create(outdir)

@@ -73,7 +73,7 @@ comValue <- function (folder='./',pattern=paste(projectname,'.*',sep=''),ext,id=
             V <- VV[,id];
         }    
         Vlist[[i]] <- V;
-        imagecontrol(path=outdir,fn=pngfile[i],bg='transparent')    
+        image.control(path=outdir,fn=pngfile[i],bg='transparent')    
         tsColors <- terrain.colors(ncol(VV))
         qlim=c(min(min(VV,na.rm=TRUE),min(oq,na.rm=TRUE) ),max(max(VV,na.rm=TRUE),max(oq,na.rm=TRUE)) );
         plot.zoo(y = VV, ylab = ext, main = paste(ext), ylim=qlim,
@@ -103,7 +103,7 @@ comValue <- function (folder='./',pattern=paste(projectname,'.*',sep=''),ext,id=
 dir.create(outdir,showWarnings=FALSE,mode='0777');
 pngfile <- paste(ext,'_','vs','.png',sep='')
 
-imagecontrol(path=outdir,fn=pngfile,bg='transparent')    
+image.control(path=outdir,fn=pngfile,bg='transparent')    
 if (if.obs){
     qlim=c(min(min(Vsets,na.rm=TRUE ),min(obs)),max(max(Vsets,na.rm=TRUE),max(obs)) )
 }else{
@@ -242,7 +242,7 @@ ptstr=gsub('\\*|\\.|=','',pattern)
             Q=Q[ct];
             time(Q)=ct;
             qvs=cbind(oq,Q);
-            imagecontrol(fn=pngfiles[i], path=outdir,wd=35,ht=50)
+            image.control(fn=pngfiles[i], path=outdir,wd=35,ht=50)
              par(mfrow=c(2,1))
            plot.zoo(qvs,col=c('red','blue'),screen=1); 
 #            ggof(sim=Q,obs=oq,col=c('red', 'blue'))
@@ -258,7 +258,7 @@ ptstr=gsub('\\*|\\.|=','',pattern)
             legend("topright",  legend=leglines )#,inset=c(-0.2,0),)
                    
             colnames(qvs)=c('Observation',paste('Q',i));
-          #  imagecontrol(fn=fdcfiles[i], path=outdir);
+          #  image.control(fn=fdcfiles[i], path=outdir);
             qfdc=fdc(qvs,col=c('red','blue'))
              
         }
@@ -288,7 +288,7 @@ ptstr=gsub('\\*|\\.|=','',pattern)
 dir.create(outdir,showWarnings=FALSE,mode='0777');
 
 pngfile <- paste('Q','_','vs',ptstr,'.png',sep='')
-imagecontrol(path=outdir,fn=pngfile,bg='white', wd=35,ht=25, res=200)    
+image.control(path=outdir,fn=pngfile,bg='white', wd=35,ht=25, res=200)    
 if (if.obs){
     qlim=c(min(min(Qmat,na.rm=TRUE),min(obs[ct])),max(max(Qmat,na.rm=TRUE),max(obs[ct])) )
 }else{
@@ -307,7 +307,7 @@ dev.off();
 
 #===========
 pngfile <- paste('QRange','_','vs',ptstr,'.png',sep='')
-imagecontrol(path=outdir,fn=pngfile,bg='white', wd=35,ht=25, res=200)   
+image.control(path=outdir,fn=pngfile,bg='white', wd=35,ht=25, res=200)   
 y.low <- apply(Qmat,1,min,na.rm=TRUE)
 y.high <- apply(Qmat,1,max,na.rm=TRUE)
 y.mean <- apply(Qmat,1,mean,na.rm=TRUE)

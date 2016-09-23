@@ -149,7 +149,7 @@ barmat=pmat[rev(1:5),c(3,4,1,2)]
 fn=paste(Resultpath,'/WATERBANLANCE.txt',sep='')
 write.table(barmat, file=fn)
 fn=paste('WATERBANLANCE.png',sep='')
-imagecontrol(fn=fn)
+image.control(fn=fn)
 barplot(barmat, col=rev(c('green', 'darkgreen','orange','blue','darkblue')),
         ylab='Percentage of water balance', legend = rownames(barmat))
 dev.off()

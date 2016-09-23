@@ -16,7 +16,7 @@
 #' loadoutputQ(outpath,projectname,inpath)
 
 loadoutput <-function(extlist,reload=FALSE, path=outpath, rdspath=outpath,
-                      rdsname=paste(projectname,"_out.RDS",sep="")){
+                      rdsname=paste(projectname,"_out.RDS",sep=""), bak=TRUE){
 #   nargin <- nargs();
 #    if (nargin <1){
 #        cat("\nUsage:\n\t PIHMout <- loadoutput(outpath=\"./\",projectname)\n");
@@ -24,7 +24,7 @@ loadoutput <-function(extlist,reload=FALSE, path=outpath, rdspath=outpath,
 #        return(0);
 #    }
     rdsfile=file.path(rdspath,rdsname);
-    fns=list.files(path=path,pattern=paste(projectname,'.*.dat',sep=''),full.names=TRUE)
+    fns=list.files(path=path,pattern=glob2rx(paste(projectname,'.*.dat',sep='')),full.names=TRUE)
     tf = max(file.info(fns)[,'mtime'])  #max time tage of modification of .dat file
     tr = file.info(rdsfile)[,'mtime'] #time tag of rds file.
     if (missing(reload)){
@@ -44,23 +44,13 @@ loadoutput <-function(extlist,reload=FALSE, path=outpath, rdspath=outpath,
         if(!missing(extlist)){
             exts<-paste(projectname,'.',extlist,'.dat$',sep='')
             pattern=paste(exts,collapse='|')
-            if (pihmver >2.3){
-                flist <- list.files(path=path,ignore.case = TRUE,pattern=pattern);
-                fpath <- list.files(path=path,ignore.case = TRUE,pattern=pattern, full.names = TRUE );
-            }else{
-                flist <- list.files(path=path,ignore.case = TRUE,pattern=pattern );
-                fpath <- list.files(path=path,ignore.case = TRUE,pattern=pattern, full.names = TRUE );
-            }
+                flist <- list.files(path=path,ignore.case = TRUE,pattern=glob2rx(pattern));
+                fpath <- list.files(path=path,ignore.case = TRUE,pattern=glob2rx(pattern), full.names = TRUE );
         }
         else{
             pattern=paste(projectname,'.*.dat$',sep='')
-             if (pihmver >2.3){
-                flist <- list.files(path=path,ignore.case = TRUE,pattern=pattern);
-                fpath <- list.files(path=path,ignore.case = TRUE,pattern=pattern, full.names = TRUE );
-            }else{
-                flist <- list.files(path=path,ignore.case = TRUE,pattern=pattern );
-                fpath <- list.files(path=path,ignore.case = TRUE,pattern=pattern, full.names = TRUE );
-            } 
+                flist <- list.files(path=path,ignore.case = TRUE,pattern=glob2rx(pattern));
+                fpath <- list.files(path=path,ignore.case = TRUE,pattern=glob2rx(pattern), full.names = TRUE );
         }
         dataname <- substring(flist,nchar(projectname) + 2,nchar(flist) - 4)
         
@@ -68,15 +58,23 @@ loadoutput <-function(extlist,reload=FALSE, path=outpath, rdspath=outpath,
         #out <- list("names"=dataname);  #Names of data;
         length(out) <- length(dataname);
         names(out) <- dataname;
-        mesh <- readmesh(bak=TRUE, file=dir(path=path, pattern=paste(projectname, '.mesh.bak', sep=''), full.names=TRUE ) );
-        riv <- readriv(bak=TRUE, file=dir(path=path, pattern=paste(projectname, '.riv.bak', sep='') , full.names=TRUE ) ); 
-        for( i in 1:length(fpath)){
+        mesh <- readmesh(bak=TRUE, shp=FALSE)
+        if(RIVERON) riv <- readriv(bak=TRUE)
+        nf= length(fpath);
+        for( i in  1:nf){
             if (file.info(fpath[i])$size >0){
-                message(fpath[i]);
+                message(i, '/', nf,'\t',flist[i]);
                 nc <- mesh$size[1] ;
-                if ( grepl('^riv',tolower(dataname[i])) || grepl('^stage',tolower(dataname[i])) ) {
+                if ( RIVERON && (grepl('^riv',tolower(dataname[i])) || grepl('^stage',tolower(dataname[i])) )) {
                     nc <- riv$River$size 
                 }
+                if(LAKEON){
+                    if ( grepl('^lake',tolower(dataname[i])) || grepl('^stage',tolower(dataname[i])) ) {
+                        latt = lake.readatt(bak=bak);
+                        nc <-  nrow(latt)
+                    }
+                }
+                message('ncol =', nc)
                 d <- readout( dataname[i],binary=TRUE,nc)
                 t<-time(d)[nrow(d)];            
                 n=mesh$size[[1]];
@@ -92,21 +90,25 @@ loadoutput <-function(extlist,reload=FALSE, path=outpath, rdspath=outpath,
         }
         t=time(out[[1]]);
         out=c(out,list('CommonTime'=t));  
-        
         saveRDS(out,file=rdsfile,compress=TRUE);
     }
     valuenames=names(out)
     if ('ET0' %in%  valuenames & 'ET1' %in%  valuenames & 'ET2' %in%  valuenames ){
+        if(length(out$ET0) >0 & length(out$ET1)>0 & length(out$ET2)>0) 
         out$ET=out$ET0+out$ET1+out$ET2
     }
     if ('FluxSub0' %in%  valuenames & 'FluxSub1' %in%  valuenames & 'FluxSub2' %in%  valuenames ){
-        out$FluxSub=out$FluxSub0+out$FluxSub1+out$FluxSub2
+        if(length(out$FluxSub0) >0 & length(out$FluxSub1)>0 & length(out$FluxSub2)>0) 
+            out$FluxSub=out$FluxSub0+out$FluxSub1+out$FluxSub2
     }
     if ('FluxSurf0' %in%  valuenames & 'FluxSurf1' %in%  valuenames & 'FluxSurf2' %in%  valuenames ){
-        out$FluxSurf=out$FluxSurf0+out$FluxSurf1+out$FluxSurf2
+        if(length(out$FluxSurf0) >0 & length(out$FluxSurf1)>0 & length(out$FluxSurf2)>0) 
+            out$FluxSurf=out$FluxSurf0+out$FluxSurf1+out$FluxSurf2
     }
+
     if ('GW' %in%  valuenames & 'GW' %in%  valuenames ){
-        out$gu=out$GW+out$unsat
+        if(length(out$GW) >0 & length(out$unsat)>0 ) 
+           out$gu=out$GW+out$unsat
     }
         assign('PIHMOUT', out,envir=.GlobalEnv);
     return(out)

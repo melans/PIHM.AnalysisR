@@ -36,9 +36,10 @@ readpihmmf <- function(fn,binary,ncol){
 
     return(ts);
 }
-readpihm20 <- function(fn){
+readpihm20 <- function(fn, start=as.POSIXct('2000-01-01','UTC') ){
     d <- read.table(fn);
-    t <- as.Date(d[,1]);
+    t0 = as.POSIXct(start);
+    t <- minutes(d[,1]) + t0;
     data <- d[,-1];
     ts <- xts(data,order.by=t);
     
@@ -47,35 +48,13 @@ readpihm20 <- function(fn){
 #==============================
 
 
-readout <-function(ext,binary=TRUE, ncol,path, reload=FALSE){
+readout <-function(ext,binary=TRUE, ncol,path, reload=FALSE,start=as.POSIXct('2000-01-01','UTC')){
     if (missing(path)){
         path <- outpath;
     }else{
         path <- path;
     }
-#   rdsfile=file.path(path,paste(projectname,"_out.RData",sep=""));
-#    fns=list.files(path=outpath,pattern=paste(projectname,'.*.dat',sep=''),full.names=TRUE)
-#    tf = max(file.info(fns)[,'mtime'])  #max time tage of modification of .dat file
-#    tr = file.info(rdsfile)[,'mtime'] #time tag of rds file.
-#    if (missing(reload)){
-#        if (file.exists(rdsfile)){
-#            if (tf-tr >0){
-#                reload=TRUE;  #new output files.
-#            }else{
-#                reload=FALSE; #newest out files
-#            }
-#        }else{
-#            reload =TRUE;    #no rds file saved.
-#        }
-#    }
-#
-#    if ( ! reload){
-#         out = readRDS(file=rdsfile) #read from RDS file.
-#        ts=out[[ext]];
-#        mn=dim(ts);
-#        message('Reading ',ext, ' from ',rdsfile,'\n[',mn[1],',',mn[2],']\n');
-#    }else {
-        #cat("\t Reading file \n\t\t ",as.character(fn) ,"\n");
+
         if (pihmver > 2.3){
             if (binary){
                 fn=list.files(path=path,pattern=paste(projectname,'.',ext,'.dat$',sep=''),full.names=TRUE);
@@ -104,8 +83,12 @@ readout <-function(ext,binary=TRUE, ncol,path, reload=FALSE){
             }
         }
         else{
-            fn=list.files(path=path,pattern=paste(projectname,'.',ext,'*',sep=''),full.names=TRUE);
-            ts <- readpihm20(fn);
+            fn=list.files(path=path,pattern=glob2rx(paste0(projectname,'.',ext,'.dat')),full.names=TRUE);
+            if( file.info(fn)$size >0 ){
+                ts <- readpihm20(fn, start=start);
+            }else{
+                return(0)
+            }
         }
     return(ts);
 }

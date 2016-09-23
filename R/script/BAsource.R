@@ -133,7 +133,7 @@
     }   
     #========summary===================
     ret <- list('wb'=wb, 'ids'=ids, "Ks"=Ks, 'calib'=readcalib(bak=TRUE))
-    pihm.dev.close()
+    image.off()
     
 #    return(ret)
 

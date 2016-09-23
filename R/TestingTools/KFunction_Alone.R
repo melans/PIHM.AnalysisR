@@ -82,7 +82,7 @@ Dinf=0.1
  
     library(ggplot2)
  
-    imagecontrol(path, fn=paste(key,'.jpg'), wd=30,ht=24,res=100 ,bg='grey')
+    image.control(path, fn=paste(key,'.jpg'), wd=30,ht=24,res=100 ,bg='grey')
 
     par(mfrow=c(2,2))
     xlab='Effective Saturation'

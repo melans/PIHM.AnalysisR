@@ -71,7 +71,7 @@ sut=as.Date(paste(year(start)+skipyear, '-01-01', sep='') )        #spin up peio
                 #DataList[[i]] <- Dat;
                 meanDat[i,] = colMeans(Dat, na.rm=TRUE)    
             }
-        #imagecontrol(fn=pngfiles[i], path=outdir,wd=35,ht=50)   
+        #image.control(fn=pngfiles[i], path=outdir,wd=35,ht=50)   
         if (length(which(is.nan(meanDat[i,])))>0){
             next()
         }
